@@ -1,0 +1,19 @@
+/*COLORS*/
+
+:root {
+    /* Primary Branding */
+    --accent-color: rgb(243, 240, 58); /* The "Yellow" */
+    --accent-text: black;
+    
+    /* Backgrounds */
+    --bg-main: rgb(29, 29, 29);
+    --tab-bg-inactive: rgba(255, 255, 255, 0.1);
+    --tab-bg-hover: rgba(255, 255, 255, 0.2);
+    
+    /* Typography & Borders */
+    --text-main: rgb(231, 231, 231);
+    --border-color: rgba(49, 51, 50, 0.158);
+    --font-family: 'Poppins', sans-serif;
+
+    --tab-content-background: rgba(255, 255, 255, 0.05);
+}

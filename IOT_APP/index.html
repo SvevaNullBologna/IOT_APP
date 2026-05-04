@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <link rel="stylesheet" href="colors.css">
+        <link rel="stylesheet" href="tabs_style.css">
+    </head>
+    <body>
+        <div class="tabs-container">
+            <input type="radio" name="option" id="things_tab" onclick="loadTab('things.html')" checked/>
+            <label for="things_tab">
+                <div class="tab-name"> Things </div>
+            </label>
+            <input type="radio" name="option" id="services_tab"  onclick="loadTab('services.html')" />
+            <label for="services_tab">
+                <div class="tab-name"> Services </div>
+            </label>
+            <input type="radio" name="option" id="relationships_tab" onclick="loadTab('relationships.html')"/>
+            <label for="relationships_tab">
+                <div class="tab-name"> Relationships </div>
+            </label>
+            <input type="radio" name="option" id="apps_tab" onclick="loadTab('apps.html')"/>
+            <label for="apps_tab">
+                <div class="tab-name"> Apps </div>
+            </label>
+
+            <div id="main-content-area" class="tab-content"></div>
+        </div>
+
+        <script> 
+            function loadTab(file) {
+                const container = document.getElementById('main-content-area');
+
+                fetch(file)
+                    .then(response => {
+                        if (!response.ok) throw new Error("Page not found");
+                        return response.text();
+                    })
+                    .then(data => {
+                        container.innerHTML = data;
+                        container.style.opacity = "1";
+                    })
+                    .catch(err => {
+                        container.innerHTML = `<p style="color: red;">Error: ${err.message}</p>`;
+                    });
+                }
+
+                window.onload = () => loadTab('things.html');
+
+        </script>
+    </body>
+</html>
