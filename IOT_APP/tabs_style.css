@@ -1,0 +1,97 @@
+
+body {
+    width: 100%;
+    height: 100vh;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    
+    justify-items: center;
+    align-content: start;
+
+    background: var(--bg-main);
+
+    padding-top: 8%;
+}
+
+
+/*TABS STYLE*/
+
+.tabs-container {
+    width: 90%;
+    max-width: 1000px;
+    height: 300px;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    position: relative; /*it allows us to show the tab content as we do!*/
+    margin-top: -100px; /*so it goes always up*/
+}
+
+input {
+    display: none;
+}
+
+label {
+    flex: 1;
+}
+
+.tab-name {
+    color: var(--text-main);
+    font-family: var(--font-family);
+    height: 60px;
+    background: var(--tab-bg-inactive);
+    backdrop-filter: blur(5px);
+    display: flex; 
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border-bottom: 2px solid var(--border-color);
+}
+
+.tab-name:hover {
+    background: var(--tab-bg-hover);
+}
+
+input:checked + label .tab-name {
+    background: var(--accent-color);
+    color: var(--accent-text);
+    font-size: 1.1rem;
+    font-weight: 800;
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+    border-bottom: 2px solid var(--accent-color);
+}
+
+/*TAB CONTENT = AS IN PAGES */
+
+.tab-content {
+    display: block; /* Always visible because JS changes the text inside */
+    position: absolute;
+    top: 60px;      /* Matches the height of your .tab-name */
+    left: 0;
+    width: 100%;
+    min-height: 400px; /* Use min-height so it grows if there is more text */
+
+    background: var(--tab-bg-inactive);
+    backdrop-filter: blur(10px);
+    color: var(--text-main);
+    font-family: var(--font-family);
+    padding: 30px;
+    box-sizing: border-box;
+
+    border-bottom-left-radius: 15px;
+    border-bottom-right-radius: 15px;
+    border: 1px solid var(--border-color);
+    border-top: 5px solid var(--accent-color); /* Keeps the yellow line visible */
+}
+
+/* DELETE these lines - they are from the old "no-javascript" version */
+/* input:checked + label .tab-content { display: block; } */
+
+
+input:checked + label .tab-content {
+    border-top: 5px solid var(--accent-color);
+    background: --tab-content-background; 
+}
