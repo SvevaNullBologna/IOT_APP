@@ -14,7 +14,6 @@ function getThingRepresentation(device) {
                 <div class="status-indicator ${device.status.toLowerCase()}"></div>
             </div>
             <div class="card-body">
-                <p class="metadata"><strong>Hardware:</strong> ${device.type}</p>
                 <p class="metadata"><strong>IP Address:</strong> ${device.address}</p>
                 <p class="metadata"><strong>System ID:</strong> ${Math.random().toString(16).slice(2, 8)}</p>
             </div>

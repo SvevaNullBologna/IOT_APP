@@ -1,6 +1,14 @@
 
 // Example data structure based on "Identity" and "Service" messages
+
 const mockDevices = [
+    {name: "raspberry", address: "192.168.1.10", status: "Active"},
+    {name: "arduino", address: "192.168.1.11", status: "Active"},
+    {name: "chromecast", address: "192.168.1.12", status: "Active"}
+];
+
+
+const mockServices = [
     { name: "Living Room Light", type: "Actuator", address: "192.168.1.10", status: "Active" },
     { name: "Kitchen Temp Sensor", type: "Sensor", address: "192.168.1.11", status: "Active" },
     { name: "Front Door Lock", type: "Actuator", address: "192.168.1.12", status: "Offline" },
@@ -8,9 +16,7 @@ const mockDevices = [
     { name: "Laser", type: "Actuator", address: "192.168.1.12", status: "Offline" }
 ];
 
-const mockServices = [
 
-];
 
 const mockRelationships = [
     // Condition-based: B runs if A returns a specific value
@@ -53,6 +59,7 @@ const mockRelationships = [
         status: "Offline"
     }
 ];
+
 
 function renderList(htmlCardsArray, containerId) {
     const container = document.getElementById(containerId);

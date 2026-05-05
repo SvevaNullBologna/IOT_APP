@@ -5,7 +5,7 @@ function readRelationshipMessage(){
 }
 
 
-function getRelationshipRepresentation(rel) {
+function getRelationshipRepresentation(rel) { //the status of relationships is an STATUSA & STATUSB 
     const isCondition = rel.condition !== null;
     
     return `

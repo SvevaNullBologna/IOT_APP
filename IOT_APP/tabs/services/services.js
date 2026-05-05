@@ -50,7 +50,7 @@ function showServicesLists(actuator_list, sensor_list){
 function initServicesTab() {
     console.log("Services initialized");
 
-    const sorted = sortServices(mockDevices);
+    const sorted = sortServices(mockServices);
     showServicesLists(sorted.actuators, sorted.sensors, );
 
     servicesInterval = setInterval(() => {

@@ -54,3 +54,34 @@
     background-color: var(--offline-status-color); 
     box-shadow: 0 0 8px var(--offline-status-color);
 }
+
+/*for relationships*/
+
+.rel-flow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 10px 0;
+    font-size: 0.9rem;
+}
+
+.flow-arrow {
+    color: var(--accent-color);
+    font-weight: bold;
+    padding: 0 5px;
+}
+
+.rel-type-tag {
+    font-size: 0.65rem;
+    background: var(--card-hover-color);
+    padding: 2px 6px;
+    border-radius: 4px;
+    text-transform: uppercase;
+}
+
+.rel-logic {
+    font-size: 0.8rem;
+    color: #bbb;
+    border-top: 1px dashed var(--card-hover-color);
+    padding-top: 8px;
+}
