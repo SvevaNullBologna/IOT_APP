@@ -7,32 +7,19 @@ const mockDevices = [
 ];
 
 
-function displayIoTList(dataArray, containerId) {
+function renderList(htmlCardsArray, containerId) {
     const container = document.getElementById(containerId);
-    
-    // Clear the container first
-    container.innerHTML = "";
+    if (!container) return;
 
-    // Create a wrapper for the list
+    container.innerHTML = "";
     const listWrapper = document.createElement('div');
     listWrapper.className = 'iot-list-wrapper';
 
-    dataArray.forEach(item => {
-        const card = document.createElement('div');
-        card.className = 'iot-card';
-        
-        // Build the internal HTML with the required meta info
-        card.innerHTML = `
-            <div class="card-header">
-                <span class="device-name">${item.name}</span>
-                <span class="device-status ${item.status.toLowerCase()}">${item.status}</span>
-            </div>
-            <div class="card-body">
-                <p><strong>Type:</strong> ${item.type}</p>
-                <p><strong>Address:</strong> ${item.address}</p>
-            </div>
-        `;
-        listWrapper.appendChild(card);
+    // It just dumps the HTML you generated in the tab-specific script
+    htmlCardsArray.forEach(cardHtml => {
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = cardHtml;
+        listWrapper.appendChild(tempDiv.firstElementChild);
     });
 
     container.appendChild(listWrapper);
