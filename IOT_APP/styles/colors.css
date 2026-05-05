@@ -16,4 +16,10 @@
     --font-family: 'Poppins', sans-serif;
 
     --tab-content-background: rgba(255, 255, 255, 0.05);
+
+    --card-background-color: rgba(255, 255, 255, 0.05);
+    --card-hover-color: rgba(255, 255, 255, 0.1);
+
+    --active-status-color: rgb(35, 187, 81);
+    --offline-status-color: rgb(185, 28, 28);
 }

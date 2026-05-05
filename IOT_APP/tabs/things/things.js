@@ -1,7 +1,7 @@
 let thingsInterval = null;
 
 
-function ReadThingMessage(){
+function readThingMessage(){
     //TODO
 }
 
@@ -19,7 +19,7 @@ function getThingRepresentation(device) {
                 <p class="metadata"><strong>System ID:</strong> ${Math.random().toString(16).slice(2, 8)}</p>
             </div>
             <div class="card-footer">
-                <button onclick="console.log('Pinging ${device.address}...')">Ping Device</button>
+                
             </div>
         </div>
     `;

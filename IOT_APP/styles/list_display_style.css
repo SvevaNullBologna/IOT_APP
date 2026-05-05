@@ -6,7 +6,7 @@
 }
 
 .iot-card {
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--card-background-color);
     border: 1px solid var(--border-color);
     border-radius: 10px;
     padding: 15px;
@@ -15,7 +15,7 @@
 
 .iot-card:hover {
     transform: translateY(-5px);
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--card-hover-color);
 }
 
 .card-header {
@@ -31,5 +31,26 @@
     color: var(--accent-color);
 }
 
-.device-status.active { color: #00ff00; }
-.device-status.offline { color: #ff4444; }
+/* optional, can be useful : */
+.device-status.active { color: var(--active-status-color); }
+.device-status.offline { color: var(--offline-status-color); }
+
+/* STATUS DOT */
+.status-indicator {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%; /* Makes it a circle */
+    display: inline-block;
+    margin-top: 5px;   /* Aligns it with the text height */
+}
+
+
+.status-indicator.active {
+    background-color: var(--active-status-color); 
+    box-shadow: 0 0 8px var(--active-status-color); 
+}
+
+.status-indicator.offline {
+    background-color: var(--offline-status-color); 
+    box-shadow: 0 0 8px var(--offline-status-color);
+}
