@@ -8,6 +8,51 @@ const mockDevices = [
     { name: "Laser", type: "Actuator", address: "192.168.1.12", status: "Offline" }
 ];
 
+const mockServices = [
+
+];
+
+const mockRelationships = [
+    // Condition-based: B runs if A returns a specific value
+    {
+        nameA: "Kitchen Temp Sensor", 
+        nameB: "Smart Fan", 
+        typeA: "Sensor", 
+        typeB: "Actuator", 
+        type: "condition", // Used for sortRelationships()
+        condition: "> 25°C", 
+        status: "Active"
+    },
+    {
+        nameA: "Front Door Lock", 
+        nameB: "Hallway Light", 
+        typeA: "Actuator", 
+        typeB: "Actuator", 
+        type: "condition",
+        condition: "Unlocked", 
+        status: "Active"
+    },
+    
+    // Order-based: B runs after A completes (regardless of value)
+    {
+        nameA: "Security System", 
+        nameB: "Email Notifier", 
+        typeA: "Actuator", 
+        typeB: "Service", 
+        type: "order", 
+        condition: null, // Order-based logic has no specific value condition
+        status: "Active"
+    },
+    {
+        nameA: "Morning Alarm", 
+        nameB: "Coffee Maker", 
+        typeA: "Service", 
+        typeB: "Actuator", 
+        type: "order", 
+        condition: null, 
+        status: "Offline"
+    }
+];
 
 function renderList(htmlCardsArray, containerId) {
     const container = document.getElementById(containerId);

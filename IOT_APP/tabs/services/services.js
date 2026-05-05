@@ -1,7 +1,7 @@
 let servicesInterval = null;
 
 function readServiceMessage(){
-
+    //
 }
 
 function getServiceRepresentation(service){
@@ -23,19 +23,40 @@ function getServiceRepresentation(service){
     `;
 }
 
+function sortServices(servicesDataArray){
+    const actuators = servicesDataArray.filter(s => s.type.toLowerCase() === "actuator");
+    const sensors  = servicesDataArray.filter(s => s.type.toLowerCase() === "sensor");
 
-function showServicesList(servicesDataArray){
+    const sorter = (a, b) => a.name.localeCompare(b.name);
+
+    return { 
+        actuators: actuators.sort(sorter), 
+        sensors: sensors.sort(sorter)
+    };
+
+}
+
+function showServicesLists(actuator_list, sensor_list){
+
+    const actuatorHTML = actuator_list.map(s => getServiceRepresentation(s));
+    const sensorHTML = sensor_list.map(s => getServiceRepresentation(s));
+
+    renderList(actuatorHTML, 'services-sensors-list-container');
+    renderList(sensorHTML, 'actuators-sensors-list-container');
     
 }
 
 
 function initServicesTab() {
     console.log("Services initialized");
-    // Requirement 2: Alphabetical listing logic goes here
-    showServicesList();
+
+    const sorted = sortServices(mockDevices);
+    showServicesLists(sorted.actuators, sorted.sensors, );
 
     servicesInterval = setInterval(() => {
         console.log("updating things...");
+        const update = sortServices(mockDevices);
+        showServicesLists(update.actuators, update.sensors);
     }, 2000);
 }
 function cleanupServicesTab() {
@@ -43,6 +64,6 @@ function cleanupServicesTab() {
 
     if(servicesInterval){
         clearInterval(servicesInterval);
-        servicesInterval;
+        servicesInterval = null;
     }
 }
