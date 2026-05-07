@@ -1,0 +1,95 @@
+
+
+ ... the generated Thing Identity-related Tweets:
+ { "Tweet Type" : "Identity_Thing","Thing ID" : "Raspberry_Sonar_M4_S1","Space ID" : "Project_space","Name" : "Sonar_Pi_Node","Model" : "Raspberry 4 B ","Vendor" : "Raspberry Pi Foundation","Owner" : "GroupIsProject","Description" : "","OS" : "Raspbian" }
+
+
+
+
+
+
+
+ ... the generated Thing Languages-related Tweets:
+ { "Tweet Type" : "Identity_Language","Thing ID" : "Raspberry_Sonar_M4_S1","Space ID" : "Project_space","Network Name" : "HotspotBello","Communication Language" : "Sockets","IP" : "0.0.0.0","Port" : "6668" }
+
+
+
+
+
+
+
+ ... the generated Entity Identity-related Tweets:
+ { "Tweet Type" : "Identity_Entity","Thing ID" : "Raspberry_Sonar_M4_S1","Space ID" : "Project_space","Name" : "DistanceReader","ID" : "Sonar_Sensor_00","Type" : "Connected","Owner" : "Raspberry_Is_Project","Vendor" : "Elegoo","Description" : "It is a raspberry with a sonar attached. " }
+
+
+
+ { "Tweet Type" : "Identity_Entity","Thing ID" : "Raspberry_Sonar_M4_S1","Space ID" : "Project_space","Name" : "Signaler","ID" : "Leds_03","Type" : "Connected","Owner" : "Raspberry_Is_Project","Vendor" : "Elegoo","Description" : "it allows to turn on/off and blink a specific color of led {"RED", "BLUE", "GREEN"}" }
+
+
+
+
+
+
+
+ ... the generated Services-related Tweets:
+ { "Tweet Type" : "Service","Name" : "DistanceReader","Thing ID" : "Raspberry_Sonar_M4_S1","Entity ID" : "Sonar_Sensor_00","Space ID" : "Project_space","Vendor" : "Elegoo","API" : "DistanceReader:[NULL]:(value,int, NULL)","Type" : "Report","AppCategory" : "Safety","Description" : "The sonars sends pulses. If they hit an object in proximity, they bounce back. The sonar calculates the time it takes for them to bounce back and from that info, we can get the distance.It can calculate the distance in a range 3mm-4m ","Keywords" : "distance,sonar,pulses,ultrasonic" }
+
+
+
+ { "Tweet Type" : "Service","Name" : "turn_on","Thing ID" : "Raspberry_Sonar_M4_S1","Entity ID" : "Leds_03","Space ID" : "Project_space","Vendor" : "Elegoo","API" : "turn_on:["id_led",int, NULL]:(NULL)","Type" : "Action","AppCategory" : "Lighting","Description" : "it allows to turn on a led","Keywords" : "turn on,led,color,GREEN,RED,BLUE" }
+
+
+
+ { "Tweet Type" : "Service","Name" : "turn_off","Thing ID" : "Raspberry_Sonar_M4_S1","Entity ID" : "Leds_03","Space ID" : "Project_space","Vendor" : "Elegoo","API" : "turn_off:["id_led",int, NULL]:(NULL)","Type" : "Action","AppCategory" : "Lighting","Description" : "it allows to turn off a led","Keywords" : "turn off,led,color,GREEN,RED,BLUE" }
+
+
+
+ { "Tweet Type" : "Service","Name" : "blink","Thing ID" : "Raspberry_Sonar_M4_S1","Entity ID" : "Leds_03","Space ID" : "Project_space","Vendor" : "Elegoo","API" : "blink:["id_led",int, NULL]:(NULL)","Type" : "Action","AppCategory" : "Lighting","Description" : "it allows the user to blink a specified led 3 times","Keywords" : "blink,led,color,BLUE,GREEN,RED" }
+
+
+
+
+
+
+
+ ... the generated Relationship-related Tweets:
+
+
+
+
+
+Initializing the interface and communication engine ................
+
+
+
+Your Atlas thing started to announce the tweets to the smart space through IP Socket multicasting ....
+
+
+Announcing tweet:  { "Tweet Type" : "Identity_Thing","Thing ID" : "Raspberry_Sonar_M4_S1","Space ID" : "Project_space","Name" : "Sonar_Pi_Node","Model" : "Raspberry 4 B ","Vendor" : "Raspberry Pi Foundation","Owner" : "GroupIsProject","Description" : "","OS" : "Raspbian" }
+
+
+
+Your Atlas thing is now ready to accept calls for the offered services .... 
+
+
+Announcing tweet:  { "Tweet Type" : "Identity_Language","Thing ID" : "Raspberry_Sonar_M4_S1","Space ID" : "Project_space","Network Name" : "HotspotBello","Communication Language" : "Sockets","IP" : "0.0.0.0","Port" : "6668" }
+
+
+
+
+
+Announcing tweet:  { "Tweet Type" : "Identity_Entity","Thing ID" : "Raspberry_Sonar_M4_S1","Space ID" : "Project_space","Name" : "DistanceReader","ID" : "Sonar_Sensor_00","Type" : "Connected","Owner" : "Raspberry_Is_Project","Vendor" : "Elegoo","Description" : "It is a raspberry with a sonar attached. " }
+
+
+
+
+
+Announcing tweet:  { "Tweet Type" : "Identity_Entity","Thing ID" : "Raspberry_Sonar_M4_S1","Space ID" : "Project_space","Name" : "Signaler","ID" : "Leds_03","Type" : "Connected","Owner" : "Raspberry_Is_Project","Vendor" : "Elegoo","Description" : "it allows to turn on/off and blink a specific color of led {"RED", "BLUE", "GREEN"}" }
+
+
+
+
+
+Announcing tweet:  { "Tweet Type" : "Service","Name" : "DistanceReader","Thing ID" : "Raspberry_Sonar_M4_S1","Entity ID" : "Sonar_Sensor_00","Space ID" : "Project_space","Vendor" : "Elegoo","API" : "DistanceReader:[NULL]:(value,int, NULL)","Type" : "Report","AppCategory" : "Safety","Description" : "The sonars sends pulses. If they hit an object in proximity, they bounce back. The sonar calculates the time it takes for them to bounce back and from that info, we can get the distance.It can calculate the distance in a range 3mm-4m ","Keywords" : "distance,sonar,pulses,ultrasonic" }
+
+
