@@ -2,10 +2,17 @@
 <html>
     <head>
         <link rel="stylesheet" href="styles/colors.css">
+        <link rel="stylesheet" href="styles/main.css">
         <link rel="stylesheet" href="styles/tabs_style.css">
          <link rel="stylesheet" href="styles/list_display_style.css">
     </head>
     <body>
+
+        <div class="ip_port_set">
+            <input type="text" name="ip" id="ip_input" placeholder="Atlas IP (e.g. 232.1.1.1)"/>
+            <input type="number" name="port" id="port_input" placeholder="Port" value="6668"/>
+            <input type="button" name="connect" id="ip_port_button" value="Connect to Atlas" onclick="handleConnect()"/>
+        </div>
         <div class="tabs-container">
             <input type="radio" name="option" id="things_tab" onclick="loadTab('tabs/things/things.html')" checked/>
             <label for="things_tab">
@@ -28,13 +35,12 @@
         </div>
 
         <script src="scripts/display.js"></script>
+        <script src="scripts/discovery.js"></script>
         <script src="tabs/things/things.js"></script>
         <script src="tabs/services/services.js"></script>
         <script src="tabs/apps/apps.js"></script>
         <script src="tabs/relationships/relationships.js"></script>
-
         <script>
-        
             const tabMap = {
                 "tabs/things/things.html": {
                     init: initThingsTab,
@@ -78,13 +84,40 @@
                     .catch(err => {
                         container.innerHTML = `<p style="color:red">${err.message}</p>`;
                     });
+            };
+
+            function handleConnect(){
+                const ip = document.getElementById('ip_input').value;
+                const port = document.getElementById('port_input').value;
+
+                if(!ip || !port){
+                    alert("Please enter both IP and a Port");
+                    return;
+                }
+
+                console.log(`Searching for Atlas on ${ip}:${portNum}...`);
+                findAtlas(ip, port); //it is a function from the discovery script
+
+            }
+            // initial load
+            window.onload = () => {
+                const saved = get_saved_atlas_ip_and_port();
+
+                if(saved.local_ip && saved.local_port){
+                    document.getElementById('ip_input').value = saved.local_ip;
+                    document.getElementById('port_input').value = salved.local_port;
+                }
+                else{
+                    empty_saved_atlas();
+                }
+                console.log("we reached the load Tab");
+                loadTab('tabs/things/things.html');
             }
 
-            // initial load
-            window.onload = () => loadTab('tabs/things/things.html');
-        </script>
 
-        
+
+
+        </script>
     
     </body>
 </html>

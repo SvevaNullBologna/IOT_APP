@@ -1,20 +1,4 @@
 
-body {
-    width: 100%;
-    height: 100vh;
-    margin: 0;
-    padding: 0;
-    display: grid;
-    
-    justify-items: center;
-    align-content: start;
-
-    background: var(--bg-main);
-
-    padding-top: 8%;
-}
-
-
 /*TABS STYLE*/
 
 .tabs-container {
@@ -25,10 +9,10 @@ body {
     justify-content: center;
     align-items: flex-start;
     position: relative; /*it allows us to show the tab content as we do!*/
-    margin-top: -100px; /*so it goes always up*/
+    margin-top: 20px; /*so it goes always up*/
 }
 
-input {
+input[type="radio"]{
     display: none;
 }
 
