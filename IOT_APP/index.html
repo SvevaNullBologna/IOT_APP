@@ -96,8 +96,8 @@
                     return;
                 }
 
-                console.log(`Searching for Atlas on ${ip}:${portNum}...`);
-                findAtlas(ip, port); //it is a function from the discovery script
+                console.log(`Searching for Atlas on ${ip}:${port}...`);
+                find_atlas(ip, port); //it is a function from the discovery script
 
             }
             // initial load
@@ -106,7 +106,7 @@
 
                 if(saved.local_ip && saved.local_port){
                     document.getElementById('ip_input').value = saved.local_ip;
-                    document.getElementById('port_input').value = salved.local_port;
+                    document.getElementById('port_input').value = saved.local_port;
                 }
                 else{
                     empty_saved_atlas();

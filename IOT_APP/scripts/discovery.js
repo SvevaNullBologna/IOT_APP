@@ -1,4 +1,5 @@
 let atlasSocket = null;
+let heatbeatInterval;
 
 const ip_storage = 'atlas_ip';
 const port_storage = 'atlas_port';
@@ -9,24 +10,31 @@ function find_atlas(ip, port){
     atlasSocket.onopen = () => {
         console.log("Connected to Atlas");
         save_atlas_ip_and_port(ip, port);
+        alert("connected");
     };
 
     atlasSocket.onmessage = (event) => {
-        console.log("Raw tweet:", event.data);
+        console.log("Data received from Atlas:", event.data);
         try{
+            let rawData = event.data;
+
+            if(rawData.includes('Announcing tweet:')){
+                rawData = rawData.replace("Announcing tweet:","").trim();
+            }
             const tweet = JSON.parse(event.data);
             read_atlas_tweet(tweet);
         }catch(err){
-            console.error("Invalid JSON tweet",err);
+            console.error("Invalid JSON tweet", event.data, err);
         }
     };
 
     atlasSocket.onerror = (err) => {
         console.error("Socket error:", err);
+        disconnect_from_atlas();
     };
 
     atlasSocket.onclose = () => {
-        console.log("Disconnected from Atlas");
+        alert("disconnected");
     }
 }
 
@@ -53,10 +61,13 @@ function empty_saved_atlas(){
 }
 
 function read_atlas_tweet(tweet){
-
+    console.log(tweet);
 }
 
 function disconnect_from_atlas(){
-
+    if(atlasSocket){
+        atlasSocket.close();
+        atlasSocket = null; 
+    }
 }
 

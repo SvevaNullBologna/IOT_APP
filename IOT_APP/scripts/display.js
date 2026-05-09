@@ -78,3 +78,11 @@ function renderList(htmlCardsArray, containerId) {
 
     container.appendChild(listWrapper);
 }
+
+
+
+
+//useful in case of Atlas disconnection. Even thought you visualize them, you cannot use them fully!
+function all_unavailable(){
+
+}
