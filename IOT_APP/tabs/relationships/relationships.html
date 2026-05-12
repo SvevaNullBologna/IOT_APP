@@ -9,10 +9,15 @@
 
 <h4> RELATIONSHIP EDITOR </h4>
 <div id="relationships-editor">
-    <div id="things-editor-zone">
-    </div>
+    <div id="things-editor-zone"></div>
     <div id="drop-editor-zone">
-
+        <svg id="canvas-connections" style="position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none;">
+            <defs>
+                <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orientation="auto">
+                    <polygon points="0 0,10 3.5, 0 7" fill="var(--accent-color)"></polygon>
+                </marker>
+            </defs>
+        </svg>
     </div>
 
 </div> <!-- GUI DRAG AND DROP -->

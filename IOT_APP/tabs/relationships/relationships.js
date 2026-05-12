@@ -1,4 +1,6 @@
 let relationshipsInterval = null;
+let connectionSource = null;
+let connections = [];
 
 function readRelationshipMessage(){
     //TODO
@@ -93,6 +95,9 @@ function renderDraggableServicesList() {
     `;
 }
 
+
+/* DRAWING CONNECTION ZONE */
+
 function initDropZone(){
     const zone = document.getElementById('drop-editor-zone');
     
@@ -103,30 +108,22 @@ function initDropZone(){
 
     zone.addEventListener('drop', (e) => {
     e.preventDefault();
-    
-    // Change this from "application/json" to "text/plain"
     const payload = e.dataTransfer.getData("text/plain"); 
     
-    if (!payload) {
-        console.error("Drop failed: No payload received");
-        return;
-    }
-
     try {
         const service = JSON.parse(atob(payload));
-        
         const rect = zone.getBoundingClientRect();
+        
+        // Subtract the zone's offset so (0,0) is the top-left of the canvas, not the screen
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
 
         spawnNodeInCanvas(service, x, y);
-    } catch (err) {
-        console.error("Error parsing drop data:", err);
-    }
-});
+    } catch (err) { console.error(err); }
+    });
 }
 
-/* DROP EDITOR ZONE  */
+/* spawn services in the connection drawing zone  */
 
 let spawnCounter = 0; // Global counter to offset drops
 
@@ -148,6 +145,7 @@ function spawnNodeInCanvas(service, x, y) {
     node.innerHTML = `
         <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
             <strong>${service.service_name}</strong>
+            <button class="connect-btn" title="Connect Relationship">🔗</button>
             <button class="delete-btn" title="Remove from canvas">×</button>
         </div>
         <div class="card-body">
@@ -165,15 +163,26 @@ function spawnNodeInCanvas(service, x, y) {
     deleteBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         node.remove(); // Removes the card from the canvas
-        // If you later add lines/connections, call updateLines() here too
+        // Remove associated connections too
+        connections = connections.filter(c => c.from !== node && c.to !== node);
+        drawConnections();
     });
 
     // 2. Add the Move Logic
     makeElementMovable(node);
 
+    //3. Add the Connection Logic
+    // Connect Logic
+    const connectBtn = node.querySelector('.connect-btn');
+    connectBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        handleConnection(node);
+    });
+
     zone.appendChild(node);
 }
 
+/* move elements in the connection creating zone  */
 function makeElementMovable(el) {
     let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
 
@@ -196,6 +205,8 @@ function makeElementMovable(el) {
             // Set the element's new position
             el.style.top = (el.offsetTop - pos2) + "px";
             el.style.left = (el.offsetLeft - pos1) + "px";
+
+            drawConnections();
         };
 
         // When mouse button is released, stop moving
@@ -205,6 +216,69 @@ function makeElementMovable(el) {
         };
     };
 }
+
+function drawConnections() {
+    const svg = document.getElementById('canvas-connections');
+    svg.querySelectorAll('path').forEach(l => l.remove());
+
+    connections.forEach(conn => {
+        const fromRect = conn.from.getBoundingClientRect();
+        const toRect = conn.to.getBoundingClientRect();
+        const zoneRect = document.getElementById('drop-editor-zone').getBoundingClientRect();
+
+        // Calculate Centers relative to the zone
+        const x1 = (fromRect.left + fromRect.width / 2) - zoneRect.left;
+        const y1 = (fromRect.top + fromRect.height / 2) - zoneRect.top;
+        const x2 = (toRect.left + toRect.width / 2) - zoneRect.left;
+        const y2 = (toRect.top + toRect.height / 2) - zoneRect.top;
+
+        // Create a path
+        const line = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        
+        // Instead of a straight line, let's use a "Bezier Curve" 
+        // This makes it much easier to see multiple lines overlapping
+        const dx = Math.abs(x1 - x2) * 0.5;
+        const dStr = `M ${x1} ${y1} C ${x1 + dx} ${y1}, ${x2 - dx} ${y2}, ${x2} ${y2}`;
+
+        line.setAttribute("d", dStr);
+        line.setAttribute("stroke", conn.type === "order" ? "var(--accent-color)" : "var(--outline-sensor-service-in-zone)");
+        line.setAttribute("stroke-width", "3");
+        line.setAttribute("fill", "none");
+        line.setAttribute("marker-end", "url(#arrowhead)");
+        if(conn.type === "condition") line.setAttribute("stroke-dasharray", "8,4");
+
+        svg.appendChild(line);
+    });
+}
+
+function handleConnection(targetNode) {
+    if (!connectionSource) {
+        // First click: Select source
+        connectionSource = targetNode;
+        targetNode.style.outline = "2px dashed var(--accent-color)";
+        console.log("Source selected. Click another node to connect.");
+    } else if (connectionSource === targetNode) {
+        // Cancel if clicking the same node
+        connectionSource.style.outline = "none";
+        connectionSource = null;
+    } else {
+        // Second click: Create connection
+        const type = confirm("OK for 'Order Based', Cancel for 'Condition Based'") 
+                     ? "order" 
+                     : "condition";
+        
+        connections.push({
+            from: connectionSource,
+            to: targetNode,
+            type: type
+        });
+
+        connectionSource.style.outline = "none";
+        connectionSource = null;
+        drawConnections();
+    }
+}
+
 
 
 /* INIT AND CLOSE RELATIONSHIP TABS */
