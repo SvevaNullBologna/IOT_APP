@@ -1,0 +1,35 @@
+#relationships-editor {
+    display: flex;
+    height: 600px; /* Or whatever height fits your dashboard */
+    border: 1px solid #444;
+    background: #222;
+    margin-top: 20px;
+}
+
+#things-editor-zone {
+    width: 300px; /* Fixed width for the sidebar */
+    min-width: 300px;
+    height: 100%;
+    overflow-y: auto; /* Scrollable list */
+    padding: 10px;
+    background: #2a2a2a;
+    border-right: 2px solid #111;
+}
+
+#drop-editor-zone {
+    flex-grow: 1; /* Takes up all remaining space on the right */
+    position: relative;
+    background-color: #1e1e1e;
+    /* Optional: Add a grid pattern to make it look like a canvas */
+    background-image: radial-gradient(#333 1px, transparent 1px);
+    background-size: 20px 20px;
+    overflow: hidden; /* Keep dropped nodes inside */
+}
+
+/* Adjust the draggable cards to be smaller */
+.draggable-item {
+    margin-bottom: 10px;
+    padding: 8px;
+    font-size: 0.85em;
+    cursor: grab;
+}

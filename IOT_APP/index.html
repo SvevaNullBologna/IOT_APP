@@ -5,7 +5,8 @@
         <link rel="stylesheet" href="styles/main.css">
         <link rel="stylesheet" href="styles/tabs_style.css">
         <link rel="stylesheet" href="styles/ip_port_set.css">
-         <link rel="stylesheet" href="styles/list_display_style.css">
+        <link rel="stylesheet" href="styles/list_display_style.css">
+        <link rel="stylesheet" href="styles/relashionships_editor.css">
     </head>
     <body>
 
@@ -115,6 +116,13 @@
                 loadTab('tabs/things/things.html');
             }
 
+            window.onServiceDragStart = (e) => {
+                // Get the base64 string from the attribute
+                const payload = e.currentTarget.getAttribute('data-service');
+                // Use 'text/plain' for maximum browser compatibility
+                e.dataTransfer.setData("text/plain", payload);
+                e.dataTransfer.effectAllowed = "copy";
+            };
 
 
 

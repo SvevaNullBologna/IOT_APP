@@ -78,7 +78,6 @@ class AtlasBridge:
 
             else :
                 self.curr_atlas_things[thing_id].last_seen = time.time()
-                # send update to interface
 
 
         # -------------------------------
@@ -88,7 +87,6 @@ class AtlasBridge:
         elif t_type == "Service":
             if thing_id in self.curr_atlas_things :
                 self.curr_atlas_things[thing_id].add_service(parsed_tweet)
-                #send update to interace
 
 
 
