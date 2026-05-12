@@ -4,6 +4,51 @@ let heatbeatInterval;
 const ip_storage = 'atlas_ip';
 const port_storage = 'atlas_port';
 
+/*const os = require('os');
+const MULTICAST_GROUP = '232.1.1.1';
+const MULTICAST_PORT = 1235;
+
+function getLocalIP() {
+    const nets = os.networkInterfaces();
+
+    for (const name of Object.keys(nets)) {
+        for (const net of nets[name]) {
+            if (
+                net.family === 'IPv4' &&
+                !net.internal &&
+                net.address.startsWith('10.') // si può levare, o mettere inizio dell'ip per più controllo
+            ) {
+                return net.address;
+            }
+        }
+    }
+}
+
+
+
+
+const localIP = getLocalIP();
+
+const udpServer = dgram.createSocket({ type: 'udp4', reuseAddr: true });
+
+udpServer.on('listening', () => {
+    udpServer.addMembership(MULTICAST_GROUP, localIP);
+    console.log(Listening on ${MULTICAST_GROUP}:${MULTICAST_PORT});
+});
+
+udpServer.on('message', msg => {
+    //parsing dei tweet....
+}
+
+
+udpServer.bind(MULTICAST_PORT);
+
+*/
+
+
+////////////////////////////////////////////
+
+
 function find_atlas(ip, port){
     atlasSocket = new WebSocket(`ws://${ip}:${port}`);
 
@@ -70,4 +115,8 @@ function disconnect_from_atlas(){
         atlasSocket = null; 
     }
 }
+
+
+
+
 

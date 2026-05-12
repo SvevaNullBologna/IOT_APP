@@ -102,43 +102,110 @@ function initDropZone(){
     });
 
     zone.addEventListener('drop', (e) => {
-        e.preventDefault();
-        const payload = e.dataTransfer.getData("application/json");
-        if (!payload) return;
+    e.preventDefault();
+    
+    // Change this from "application/json" to "text/plain"
+    const payload = e.dataTransfer.getData("text/plain"); 
+    
+    if (!payload) {
+        console.error("Drop failed: No payload received");
+        return;
+    }
 
+    try {
         const service = JSON.parse(atob(payload));
         
-        // Calculate Drop Position
         const rect = zone.getBoundingClientRect();
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
 
         spawnNodeInCanvas(service, x, y);
-    });
+    } catch (err) {
+        console.error("Error parsing drop data:", err);
+    }
+});
 }
 
 /* DROP EDITOR ZONE  */
+
+let spawnCounter = 0; // Global counter to offset drops
 
 function spawnNodeInCanvas(service, x, y) {
     const zone = document.getElementById('drop-editor-zone');
     const node = document.createElement('div');
     
-    // Style it so it actually appears at the drop coordinates
-    node.className = 'iot-card canvas-node';
+    const offset = (spawnCounter % 5) * 10;
+    spawnCounter++;
+
+    const typeClass = service.type === "Actuator" ? "actuator-node" : "sensor-node";
+
+    node.className = `iot-card canvas-node ${typeClass}`;
     node.style.position = 'absolute';
-    node.style.left = (x - 50) + 'px'; // Offset by half-width so mouse is center
-    node.style.top = (y - 20) + 'px';
-    node.style.width = '180px';
-    node.style.zIndex = '100';
+    node.style.left = (x + offset) + 'px';
+    node.style.top = (y + offset) + 'px';
+    node.style.width = '220px'; // Slightly wider to accommodate the button
 
     node.innerHTML = `
-        <div style="padding: 5px; font-size: 12px;">
+        <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
             <strong>${service.service_name}</strong>
+            <button class="delete-btn" title="Remove from canvas">×</button>
+        </div>
+        <div class="card-body">
+            <p><small>Type: ${service.type}</small></p>
+            <small>ID: ${service.thing_id}</small>
         </div>
     `;
 
+    // 1. Add the Delete Logic
+    const deleteBtn = node.querySelector('.delete-btn');
+    deleteBtn.addEventListener('mousedown', (e) => {
+        e.stopPropagation(); // Prevents the drag logic from starting
+    });
+    
+    deleteBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        node.remove(); // Removes the card from the canvas
+        // If you later add lines/connections, call updateLines() here too
+    });
+
+    // 2. Add the Move Logic
+    makeElementMovable(node);
+
     zone.appendChild(node);
 }
+
+function makeElementMovable(el) {
+    let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+
+    el.onmousedown = (e) => {
+        e = e || window.event;
+        e.preventDefault();
+        // Get the initial mouse position
+        pos3 = e.clientX;
+        pos4 = e.clientY;
+        
+        // When mouse moves, run the move function
+        document.onmousemove = (e) => {
+            e = e || window.event;
+            e.preventDefault();
+            // Calculate the new cursor position
+            pos1 = pos3 - e.clientX;
+            pos2 = pos4 - e.clientY;
+            pos3 = e.clientX;
+            pos4 = e.clientY;
+            // Set the element's new position
+            el.style.top = (el.offsetTop - pos2) + "px";
+            el.style.left = (el.offsetLeft - pos1) + "px";
+        };
+
+        // When mouse button is released, stop moving
+        document.onmouseup = () => {
+            document.onmouseup = null;
+            document.onmousemove = null;
+        };
+    };
+}
+
 
 /* INIT AND CLOSE RELATIONSHIP TABS */
 
