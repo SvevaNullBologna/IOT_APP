@@ -5,7 +5,7 @@ function readThingMessage(){
     //TODO
 }
 
-function getThingRepresentation(device) {
+function getThingCard(device) {
     // Here you define the EXACT HTML for a "Thing" card
     return `
         <div class="iot-card thing-variant">
@@ -24,7 +24,7 @@ function getThingRepresentation(device) {
 }
 
 function showThingsList(thingsDataArray){
-    const thingsHTMLData = thingsDataArray.map(device => getThingRepresentation(device));
+    const thingsHTMLData = thingsDataArray.map(getThingCard).join('');
     renderList(thingsHTMLData, 'things-list-container');
 
 }

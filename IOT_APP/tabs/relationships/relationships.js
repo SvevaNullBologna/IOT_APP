@@ -1,308 +1,569 @@
-let relationshipsInterval = null;
-let connectionSource = null;
-let connections = [];
+/* =====================================================
+STATE
+===================================================== */
 
-function readRelationshipMessage(){
-    //TODO
+const SERVICE_TYPES = {
+    SENSOR: 'Sensor',
+    ACTUATOR: 'Actuator'
+};
+
+const CONNECTION_TYPES = {
+    ORDER: 'order',
+    CONDITION: 'condition'
+};
+
+const relationshipState = {
+    interval: null,
+    connectionSource: null,
+    connections: [],
+    spawnCounter: 0
+};
+
+
+/* =====================================================
+DOM HELPERS
+===================================================== */
+
+const $ = (id) => document.getElementById(id);
+
+const createElement = (tag, className = '') => {
+    const el = document.createElement(tag);
+
+    if (className) {
+        el.className = className;
+    }
+
+    return el;
+};
+
+
+/* =====================================================
+RELATIONSHIP RENDERING
+===================================================== */
+
+function readRelationshipMessage() {
+    // TODO
 }
 
-
-function getRelationshipRepresentation(rel) { //the status of relationships is an STATUSA & STATUSB 
+function getRelationshipCard(rel) {
     const isCondition = rel.condition !== null;
-    
+
     return `
         <div class="iot-card rel-card">
             <div class="card-header">
-                <span class="rel-type-tag">${rel.type.toUpperCase()}</span>
+                <span class="rel-type-tag">
+                    ${rel.type.toUpperCase()}
+                </span>
+
                 <div class="status-indicator ${rel.status.toLowerCase()}"></div>
             </div>
-            
+
             <div class="card-body">
                 <div class="rel-flow">
                     <strong>${rel.nameA}</strong>
+
                     <span class="flow-arrow">→</span>
+
                     <strong>${rel.nameB}</strong>
                 </div>
-                
+
                 <p class="rel-logic">
-                    ${isCondition 
-                        ? `IF <code>${rel.condition}</code>` 
-                        : `THEN RUN`}
+                    ${
+                        isCondition
+                            ? `IF <code>${rel.condition}</code>`
+                            : 'THEN RUN'
+                    }
                 </p>
             </div>
         </div>
     `;
 }
 
-function sortRelationships(relationshipDataArray){
-    const condition_rel = relationshipDataArray.filter(r => r.type.toLowerCase() === "condition");
-    const order_rel  = relationshipDataArray.filter(r => r.type.toLowerCase() === "order");
-
+function sortRelationships(relationshipDataArray) {
     const sorter = (a, b) => a.nameA.localeCompare(b.nameA);
 
-    return { 
-        conditions: condition_rel.sort(sorter), 
-        orders: order_rel.sort(sorter)
-    };
+    const conditions = relationshipDataArray
+        .filter(r => r.type.toLowerCase() === CONNECTION_TYPES.CONDITION)
+        .sort(sorter);
 
+    const orders = relationshipDataArray
+        .filter(r => r.type.toLowerCase() === CONNECTION_TYPES.ORDER)
+        .sort(sorter);
+
+    return { conditions, orders };
 }
 
-function showRelationshipsLists(conditions, orders){
-    const conditionHTML = conditions.map(r => getRelationshipRepresentation(r));
-    const orderHTML = orders.map(r => getRelationshipRepresentation(r));
+function renderRelationshipLists(conditions, orders) {
+    const conditionHTML = conditions
+        .map(getRelationshipCard)
+        .join('');
 
-    renderList(conditionHTML, 'relationships-order-based-container');
-    renderList(orderHTML, 'relationships-condition-based-container');
+    const orderHTML = orders
+        .map(getRelationshipCard)
+        .join('');
+
+    renderList(
+        conditionHTML,
+        'relationships-condition-based-container'
+    );
+
+    renderList(
+        orderHTML,
+        'relationships-order-based-container'
+    );
 }
 
 
-/*DRAGGABLE SERVICES*/
+/* =====================================================
+SERVICE SIDEBAR
+===================================================== */
 
-function getDraggableServiceRepresentation(service){
+function getDraggableServiceCard(service) {
     const payload = btoa(JSON.stringify(service));
+
     return `
-        <div class="iot-card draggable-item" draggable="true" data-service='${payload}' ondragstart="onServiceDragStart(event)">
+        <div
+            class="iot-card draggable-item"
+            draggable="true"
+            data-service='${payload}'
+            ondragstart="onServiceDragStart(event)"
+        >
             <div class="card-header">
-                <h4 class="thing-title">${service.service_name}</h4>
+                <h4 class="thing-title">
+                    ${service.service_name}
+                </h4>
             </div>
             <div class="card-body">
-                <p class="metadata"><strong> API:</strong> ${service.API}</p>
-                <p class="metadata"><strong>Thing ID:</strong> ${service.thing_id}</p>
+                <p class="metadata">
+                    <strong>API:</strong>
+                    ${service.API}
+                </p>
             </div>
         </div>
     `;
-
 }
 
 function renderDraggableServicesList() {
-    const container = document.getElementById('things-editor-zone');
+    const container = $('things-editor-zone');
+
     if (!container) return;
 
-    // Grouping logic
-    const sensors = mockServices.filter(s => s.type === "Sensor");
-    const actuators = mockServices.filter(s => s.type === "Actuator");
+    const sensors = mockServices.filter(
+        service => service.type === SERVICE_TYPES.SENSOR
+    );
 
-    const createSection = (title, items) => `
-        <div class="sidebar-section">
-            <h5 style="color: #888; border-bottom: 1px solid #444; margin: 10px 0;">${title}</h5>
-            ${items.map(s => getDraggableServiceRepresentation(s)).join('')}
-        </div>
-    `;
+    const actuators = mockServices.filter(
+        service => service.type === SERVICE_TYPES.ACTUATOR
+    );
 
     container.innerHTML = `
-        ${createSection('SENSORS', sensors)}
-        ${createSection('ACTUATORS', actuators)}
+        ${createSidebarSection('SENSORS', sensors)}
+        ${createSidebarSection('ACTUATORS', actuators)}
+    `;
+}
+
+function createSidebarSection(title, items) {
+    return `
+        <div class="sidebar-section">
+            <h5 class="sidebar-section-title">
+                ${title}
+            </h5>
+
+            ${items.map(getDraggableServiceCard).join('')}
+        </div>
     `;
 }
 
 
-/* DRAWING CONNECTION ZONE */
+/* =====================================================
+DROP ZONE
+===================================================== */
 
-function initDropZone(){
-    const zone = document.getElementById('drop-editor-zone');
-    
-    zone.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        e.dataTransfer.dropEffect = "copy";
-    });
+function initDropZone() {
+    const zone = $('drop-editor-zone');
 
-    zone.addEventListener('drop', (e) => {
-    e.preventDefault();
-    const payload = e.dataTransfer.getData("text/plain"); 
-    
+    zone.addEventListener('dragover', handleZoneDragOver);
+    zone.addEventListener('drop', handleZoneDrop);
+}
+
+function handleZoneDragOver(event) {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'copy';
+}
+
+function handleZoneDrop(event) {
+    event.preventDefault();
+
+    const payload = event.dataTransfer.getData('text/plain');
+
     try {
         const service = JSON.parse(atob(payload));
-        const rect = zone.getBoundingClientRect();
-        
-        // Subtract the zone's offset so (0,0) is the top-left of the canvas, not the screen
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
 
-        spawnNodeInCanvas(service, x, y);
-    } catch (err) { console.error(err); }
-    });
-}
+        const zoneRect = $('drop-editor-zone')
+            .getBoundingClientRect();
 
-/* spawn services in the connection drawing zone  */
+        const x = event.clientX - zoneRect.left;
+        const y = event.clientY - zoneRect.top;
 
-let spawnCounter = 0; // Global counter to offset drops
+        createCanvasNode(service, x, y);
 
-function spawnNodeInCanvas(service, x, y) {
-    const zone = document.getElementById('drop-editor-zone');
-    const node = document.createElement('div');
-    
-    const offset = (spawnCounter % 5) * 10;
-    spawnCounter++;
-
-    const typeClass = service.type === "Actuator" ? "actuator-node" : "sensor-node";
-
-    node.className = `iot-card canvas-node ${typeClass}`;
-    node.style.position = 'absolute';
-    node.style.left = (x + offset) + 'px';
-    node.style.top = (y + offset) + 'px';
-    node.style.width = '220px'; // Slightly wider to accommodate the button
-
-    node.innerHTML = `
-        <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
-            <strong>${service.service_name}</strong>
-            <button class="connect-btn" title="Connect Relationship">🔗</button>
-            <button class="delete-btn" title="Remove from canvas">×</button>
-        </div>
-        <div class="card-body">
-            <p><small>Type: ${service.type}</small></p>
-            <small>ID: ${service.thing_id}</small>
-        </div>
-    `;
-
-    // 1. Add the Delete Logic
-    const deleteBtn = node.querySelector('.delete-btn');
-    deleteBtn.addEventListener('mousedown', (e) => {
-        e.stopPropagation(); // Prevents the drag logic from starting
-    });
-    
-    deleteBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        node.remove(); // Removes the card from the canvas
-        // Remove associated connections too
-        connections = connections.filter(c => c.from !== node && c.to !== node);
-        drawConnections();
-    });
-
-    // 2. Add the Move Logic
-    makeElementMovable(node);
-
-    //3. Add the Connection Logic
-    // Connect Logic
-    const connectBtn = node.querySelector('.connect-btn');
-    connectBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        handleConnection(node);
-    });
-
-    zone.appendChild(node);
-}
-
-/* move elements in the connection creating zone  */
-function makeElementMovable(el) {
-    let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
-
-    el.onmousedown = (e) => {
-        e = e || window.event;
-        e.preventDefault();
-        // Get the initial mouse position
-        pos3 = e.clientX;
-        pos4 = e.clientY;
-        
-        // When mouse moves, run the move function
-        document.onmousemove = (e) => {
-            e = e || window.event;
-            e.preventDefault();
-            // Calculate the new cursor position
-            pos1 = pos3 - e.clientX;
-            pos2 = pos4 - e.clientY;
-            pos3 = e.clientX;
-            pos4 = e.clientY;
-            // Set the element's new position
-            el.style.top = (el.offsetTop - pos2) + "px";
-            el.style.left = (el.offsetLeft - pos1) + "px";
-
-            drawConnections();
-        };
-
-        // When mouse button is released, stop moving
-        document.onmouseup = () => {
-            document.onmouseup = null;
-            document.onmousemove = null;
-        };
-    };
-}
-
-function drawConnections() {
-    const svg = document.getElementById('canvas-connections');
-    svg.querySelectorAll('path').forEach(l => l.remove());
-
-    connections.forEach(conn => {
-        const fromRect = conn.from.getBoundingClientRect();
-        const toRect = conn.to.getBoundingClientRect();
-        const zoneRect = document.getElementById('drop-editor-zone').getBoundingClientRect();
-
-        // Calculate Centers relative to the zone
-        const x1 = (fromRect.left + fromRect.width / 2) - zoneRect.left;
-        const y1 = (fromRect.top + fromRect.height / 2) - zoneRect.top;
-        const x2 = (toRect.left + toRect.width / 2) - zoneRect.left;
-        const y2 = (toRect.top + toRect.height / 2) - zoneRect.top;
-
-        // Create a path
-        const line = document.createElementNS("http://www.w3.org/2000/svg", "path");
-        
-        // Instead of a straight line, let's use a "Bezier Curve" 
-        // This makes it much easier to see multiple lines overlapping
-        const dx = Math.abs(x1 - x2) * 0.5;
-        const dStr = `M ${x1} ${y1} C ${x1 + dx} ${y1}, ${x2 - dx} ${y2}, ${x2} ${y2}`;
-
-        line.setAttribute("d", dStr);
-        line.setAttribute("stroke", conn.type === "order" ? "var(--accent-color)" : "var(--outline-sensor-service-in-zone)");
-        line.setAttribute("stroke-width", "3");
-        line.setAttribute("fill", "none");
-        line.setAttribute("marker-end", "url(#arrowhead)");
-        if(conn.type === "condition") line.setAttribute("stroke-dasharray", "8,4");
-
-        svg.appendChild(line);
-    });
-}
-
-function handleConnection(targetNode) {
-    if (!connectionSource) {
-        // First click: Select source
-        connectionSource = targetNode;
-        targetNode.style.outline = "2px dashed var(--accent-color)";
-        console.log("Source selected. Click another node to connect.");
-    } else if (connectionSource === targetNode) {
-        // Cancel if clicking the same node
-        connectionSource.style.outline = "none";
-        connectionSource = null;
-    } else {
-        // Second click: Create connection
-        const type = confirm("OK for 'Order Based', Cancel for 'Condition Based'") 
-                     ? "order" 
-                     : "condition";
-        
-        connections.push({
-            from: connectionSource,
-            to: targetNode,
-            type: type
-        });
-
-        connectionSource.style.outline = "none";
-        connectionSource = null;
-        drawConnections();
+    } catch (error) {
+        console.error(error);
     }
 }
 
 
+/* =====================================================
+CANVAS NODES
+===================================================== */
 
-/* INIT AND CLOSE RELATIONSHIP TABS */
+function createCanvasNode(service, x, y) {
+    const node = buildCanvasNode(service, x, y);
+
+    setupDeleteButton(node);
+    setupConnectionButton(node);
+
+    enableNodeDragging(node);
+
+    $('drop-editor-zone').appendChild(node);
+}
+
+function buildCanvasNode(service, x, y) {
+    const node = createElement('div');
+
+    const offset = getSpawnOffset();
+
+    node.className = getNodeClass(service);
+
+    setNodePosition(
+        node,
+        x + offset,
+        y + offset
+    );
+
+    node.innerHTML = getCanvasNodeHTML(service);
+
+    return node;
+}
+
+function getSpawnOffset() {
+    const offset = (relationshipState.spawnCounter % 5) * 10;
+
+    relationshipState.spawnCounter++;
+
+    return offset;
+}
+
+function getNodeClass(service) {
+    const typeClass =
+        service.type === SERVICE_TYPES.ACTUATOR
+            ? 'actuator-node'
+            : 'sensor-node';
+
+    return `iot-card canvas-node ${typeClass}`;
+}
+
+function setNodePosition(node, x, y) {
+    node.style.left = `${x}px`;
+    node.style.top = `${y}px`;
+}
+
+function getCanvasNodeHTML(service) {
+    return `
+        <div class="card-header canvas-node-header">
+            <strong>${service.service_name}</strong>
+
+            <div class="node-actions">
+                <button
+                    class="connect-btn"
+                    title="Connect Relationship"
+                >
+                    🔗
+                </button>
+
+                <button
+                    class="delete-btn"
+                    title="Remove from canvas"
+                >
+                    ×
+                </button>
+            </div>
+        </div>
+        <div class="card-body">
+            <small>ID: ${service.thing_id}</small>
+        </div>
+    `;
+}
+
+function setupDeleteButton(node) {
+    const deleteBtn = node.querySelector('.delete-btn');
+
+    deleteBtn.addEventListener('mousedown', stopEvent);
+
+    deleteBtn.addEventListener('click', (event) => {
+        stopEvent(event);
+
+        node.remove();
+
+        relationshipState.connections =
+            relationshipState.connections.filter(
+                connection =>
+                    connection.from !== node &&
+                    connection.to !== node
+            );
+
+        drawConnections();
+    });
+}
+
+function setupConnectionButton(node) {
+    const connectBtn = node.querySelector('.connect-btn');
+
+    connectBtn.addEventListener('click', (event) => {
+        stopEvent(event);
+        handleNodeConnectionClick(node);
+    });
+}
+
+function stopEvent(event) {
+    event.stopPropagation();
+}
+
+function handleNodeConnectionClick(targetNode) {
+
+    if (!relationshipState.connectionSource) {
+
+        relationshipState.connectionSource = targetNode;
+
+        targetNode.style.outline =
+            '2px dashed var(--accent-color)';
+
+        console.log(
+            'Source selected. Click another node to connect.'
+        );
+
+        return;
+    }
+
+    if (relationshipState.connectionSource === targetNode) {
+
+        relationshipState.connectionSource.style.outline = 'none';
+
+        relationshipState.connectionSource = null;
+
+        return;
+    }
+
+    const type = confirm(
+        "OK for 'Order Based', Cancel for 'Condition Based'"
+    )
+        ? CONNECTION_TYPES.ORDER
+        : CONNECTION_TYPES.CONDITION;
+
+    relationshipState.connections.push({
+        from: relationshipState.connectionSource,
+        to: targetNode,
+        type
+    });
+
+    relationshipState.connectionSource.style.outline = 'none';
+
+    relationshipState.connectionSource = null;
+
+    drawConnections();
+}
+
+
+/* =====================================================
+NODE MOVEMENT
+===================================================== */
+
+function enableNodeDragging(node) {
+
+    let mouseX = 0;
+    let mouseY = 0;
+
+    let deltaX = 0;
+    let deltaY = 0;
+
+    node.addEventListener('mousedown', startDragging);
+
+    function startDragging(event) {
+
+        event.preventDefault();
+
+        mouseX = event.clientX;
+        mouseY = event.clientY;
+
+        document.addEventListener('mousemove', dragNode);
+        document.addEventListener('mouseup', stopDragging);
+    }
+
+    function dragNode(event) {
+
+        event.preventDefault();
+
+        deltaX = mouseX - event.clientX;
+        deltaY = mouseY - event.clientY;
+
+        mouseX = event.clientX;
+        mouseY = event.clientY;
+
+        node.style.top =
+            `${node.offsetTop - deltaY}px`;
+
+        node.style.left =
+            `${node.offsetLeft - deltaX}px`;
+
+        drawConnections();
+    }
+
+    function stopDragging() {
+        document.removeEventListener(
+            'mousemove',
+            dragNode
+        );
+
+        document.removeEventListener(
+            'mouseup',
+            stopDragging
+        );
+    }
+}
+
+
+/* =====================================================
+CONNECTIONS
+===================================================== */
+
+function drawConnections() {
+    clearConnectionPaths();
+
+    relationshipState.connections.forEach(
+        drawConnection
+    );
+}
+
+function clearConnectionPaths() {
+    $('canvas-connections')
+        .querySelectorAll('path')
+        .forEach(path => path.remove());
+}
+
+function drawConnection(connection) {
+
+    const path = createConnectionPath(connection);
+
+    $('canvas-connections').appendChild(path);
+}
+
+function createConnectionPath(connection) {
+
+    const zoneRect = $('drop-editor-zone')
+        .getBoundingClientRect();
+
+    const from = getNodeCenter(
+        connection.from,
+        zoneRect
+    );
+
+    const to = getNodeCenter(
+        connection.to,
+        zoneRect
+    );
+
+    const path = document.createElementNS(
+        'http://www.w3.org/2000/svg',
+        'path'
+    );
+
+    const dx = Math.abs(from.x - to.x) * 0.5;
+
+    const d = `
+        M ${from.x} ${from.y}
+        C ${from.x + dx} ${from.y},
+          ${to.x - dx} ${to.y},
+          ${to.x} ${to.y}
+    `;
+
+    path.setAttribute('d', d);
+
+    path.setAttribute(
+        'stroke',
+        connection.type === CONNECTION_TYPES.ORDER
+            ? 'var(--accent-color)'
+            : 'var(--outline-sensor-service-in-zone)'
+    );
+
+    path.setAttribute('stroke-width', '3');
+    path.setAttribute('fill', 'none');
+    path.setAttribute('marker-end', 'url(#arrowhead)');
+
+    if (connection.type === CONNECTION_TYPES.CONDITION) {
+        path.setAttribute('stroke-dasharray', '8,4');
+    }
+
+    return path;
+}
+
+function getNodeCenter(node, zoneRect) {
+
+    const rect = node.getBoundingClientRect();
+
+    return {
+        x: rect.left + rect.width / 2 - zoneRect.left,
+        y: rect.top + rect.height / 2 - zoneRect.top
+    };
+}
+
+
+/* =====================================================
+TAB LIFECYCLE
+===================================================== */
 
 function initRelationshipsTab() {
-    console.log("Relationships initialized");
-    const sorted = sortRelationships(mockRelationships);
-    
-    showRelationshipsLists(sorted.conditions, sorted.orders);
+
+    console.log('Relationships initialized');
+
+    const sorted = sortRelationships(
+        mockRelationships
+    );
+
+    renderRelationshipLists(
+        sorted.conditions,
+        sorted.orders
+    );
+
     renderDraggableServicesList();
+
     initDropZone();
 
-    relationshipsInterval = setInterval(() => {
-        console.log("updating things...");
-        const update = sortRelationships(mockRelationships);
-        showRelationshipsLists(update.conditions, update.orders);
-    }, 2000);
-    
-}
-function cleanupRelationshipsTab() {
-    console.log("Relationships cleaned up");
+    relationshipState.interval = setInterval(() => {
 
-    if(relationshipsInterval){
-        clearInterval(relationshipsInterval);
-        relationshipsInterval = null;
+        console.log('Updating relationships...');
+
+        const updated = sortRelationships(
+            mockRelationships
+        );
+
+        renderRelationshipLists(
+            updated.conditions,
+            updated.orders
+        );
+
+    }, 2000);
+}
+
+function cleanupRelationshipsTab() {
+
+    console.log('Relationships cleaned up');
+
+    if (relationshipState.interval) {
+
+        clearInterval(
+            relationshipState.interval
+        );
+
+        relationshipState.interval = null;
     }
 }

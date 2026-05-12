@@ -4,7 +4,7 @@ function readServiceMessage(){
     //
 }
 
-function getServiceRepresentation(service){
+function getServiceCard(service){
     return `
         <div class="iot-card thing-variant">
             <div class="card-header">
@@ -35,8 +35,8 @@ function sortServices(servicesDataArray){
 
 function showServicesLists(actuator_list, sensor_list){
 
-    const actuatorHTML = actuator_list.map(s => getServiceRepresentation(s));
-    const sensorHTML = sensor_list.map(s => getServiceRepresentation(s));
+    const actuatorHTML = actuator_list.map(getServiceCard).join('');
+    const sensorHTML = sensor_list.map(getServiceCard).join('');
 
     renderList(actuatorHTML, 'services-sensors-list-container');
     renderList(sensorHTML, 'actuators-sensors-list-container');

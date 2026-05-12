@@ -61,22 +61,17 @@ const mockRelationships = [
 ];
 
 
-function renderList(htmlCardsArray, containerId) {
+function renderList(html, containerId) {
+
     const container = document.getElementById(containerId);
+
     if (!container) return;
 
-    container.innerHTML = "";
-    const listWrapper = document.createElement('div');
-    listWrapper.className = 'iot-list-wrapper';
-
-    // It just dumps the HTML you generated in the tab-specific script
-    htmlCardsArray.forEach(cardHtml => {
-        const tempDiv = document.createElement('div');
-        tempDiv.innerHTML = cardHtml;
-        listWrapper.appendChild(tempDiv.firstElementChild);
-    });
-
-    container.appendChild(listWrapper);
+    container.innerHTML = `
+        <div class="iot-list-wrapper">
+            ${html}
+        </div>
+    `;
 }
 
 //useful in case of Atlas disconnection. Even thought you visualize them, you cannot use them fully!
