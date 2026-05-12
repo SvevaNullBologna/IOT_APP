@@ -10,12 +10,11 @@ function getThingRepresentation(device) {
     return `
         <div class="iot-card thing-variant">
             <div class="card-header">
-                <h4 class="thing-title">${device.name}</h4>
+                <h4 class="thing-title">${device.hardware_id}</h4>
                 <div class="status-indicator ${device.status.toLowerCase()}"></div>
             </div>
             <div class="card-body">
-                <p class="metadata"><strong>IP Address:</strong> ${device.address}</p>
-                <p class="metadata"><strong>System ID:</strong> ${Math.random().toString(16).slice(2, 8)}</p>
+                <p class="metadata"><strong>IP Address:</strong> ${device.space_id}</p>
             </div>
             <div class="card-footer">
                 

@@ -2,18 +2,18 @@
 // Example data structure based on "Identity" and "Service" messages
 
 const mockDevices = [
-    {name: "raspberry", address: "192.168.1.10", status: "Active"},
-    {name: "arduino", address: "192.168.1.11", status: "Active"},
-    {name: "chromecast", address: "192.168.1.12", status: "Active"}
+    {hardware_id: "raspberry", space_id: "VSS", status: "Active"},
+    {hardware_id: "arduino", space_id: "VSS", status: "Active"},
+    {hardware_id: "chromecast", space_id: "VSS", status: "Active"}
 ];
 
 
 const mockServices = [
-    { name: "Living Room Light", type: "Actuator", address: "192.168.1.10", status: "Active" },
-    { name: "Kitchen Temp Sensor", type: "Sensor", address: "192.168.1.11", status: "Active" },
-    { name: "Front Door Lock", type: "Actuator", address: "192.168.1.12", status: "Offline" },
-    { name: "Desk workers monitor", type: "Sensor", address: "192.168.1.12", status: "Offline" },
-    { name: "Laser", type: "Actuator", address: "192.168.1.12", status: "Offline" }
+    { service_name: "Living Room Light", service_id : "led_4", API : "spaceholder", thing_id : "raspberry", type: "Actuator", status: "Active" },
+    { service_name: "Kitchen Temp Sensor", service_id : "temp_sens_1", API : "spaceholder",  thing_id : "raspberry", type: "Sensor", status: "Active" },
+    { service_name: "Front Door Lock", service_id : "lock_00", API : "spaceholder",  thing_id : "arduino",  type: "Actuator", status: "Offline" },
+    { service_name: "Desk workers monitor", service_id : "monitor_1", API : "spaceholder",  thing_id : "chromecast", type: "Sensor", status: "Offline" },
+    { service_name: "Laser", service_id : "laser_111", type: "Actuator", API : "spaceholder",  thing_id : "raspberry", status: "Offline" }
 ];
 
 
@@ -78,9 +78,6 @@ function renderList(htmlCardsArray, containerId) {
 
     container.appendChild(listWrapper);
 }
-
-
-
 
 //useful in case of Atlas disconnection. Even thought you visualize them, you cannot use them fully!
 function all_unavailable(){

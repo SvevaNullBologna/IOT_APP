@@ -50,7 +50,7 @@ class AtlasBridge:
             except socket.timeout:
                 print("Socket timed out")
         #we detect silence from atlas
-        #what should we do?
+        #when it restarts, we restart updating
 
 
 
