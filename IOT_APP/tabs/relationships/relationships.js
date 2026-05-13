@@ -1,4 +1,94 @@
 /* =====================================================
+RELATIONSHIP
+====================================================== */
+const relationships = [
+    // Condition-based: B runs if A returns a specific value
+    {
+        nameA: "Kitchen Temp Sensor", 
+        nameB: "Smart Fan", 
+        typeA: "Sensor", 
+        typeB: "Actuator", 
+        type: "condition", // Used for sortRelationships()
+        condition: "> 25°C", 
+        status: "Active"
+    },
+    {
+        nameA: "Front Door Lock", 
+        nameB: "Hallway Light", 
+        typeA: "Actuator", 
+        typeB: "Actuator", 
+        type: "condition",
+        condition: "Unlocked", 
+        status: "Active"
+    },
+    
+    // Order-based: B runs after A completes (regardless of value)
+    {
+        nameA: "Security System", 
+        nameB: "Email Notifier", 
+        typeA: "Actuator", 
+        typeB: "Service", 
+        type: "order", 
+        condition: null, // Order-based logic has no specific value condition
+        status: "Active"
+    },
+    {
+        nameA: "Morning Alarm", 
+        nameB: "Coffee Maker", 
+        typeA: "Service", 
+        typeB: "Actuator", 
+        type: "order", 
+        condition: null, 
+        status: "Offline"
+    }
+];
+
+function make_relationship(type, nodeA, nodeB, condition = null){
+    try{
+        const serviceA = JSON.parse(decodeURIComponent(atob(nodeA.getAttribute('data-service'))));
+        const serviceB = JSON.parse(decodeURIComponent(atob(nodeB.getAttribute('data-service'))));
+
+        const newRel = {
+            nameA: serviceA.service_name,
+            nameB: serviceB.service_name,
+            typeA: serviceA.type,
+            typeB: serviceB.type,
+            type: type,
+            condition: condition,
+            status: "Active"
+        };
+        if (type === CONNECTION_TYPES.ORDER){
+            newRel.condition = null;
+        }
+        return newRel;
+
+    }catch(e){
+        console.error("Invalid relationship parameters");
+        return null;
+    }
+}
+
+function add_relationship(newRel){
+    if(!newRel) return;
+
+    relationships.push(newRel);
+
+    const sorted = sortRelationships(relationships);
+    renderRelationshipLists(sorted.conditions, sorted.orders);
+}
+
+function remove_relationship(relId){
+    const index = relationships.findIndex(r=> r.id === relId);
+    if(index!==-1){
+        relationships.splice(index,1);
+        
+        const sorted = sortRelationships(relationships);
+        renderRelationshipLists(sorted.conditions, sorted.orders);
+    }
+    
+}
+
+/* =====================================================
 STATE
 ===================================================== */
 
@@ -56,7 +146,13 @@ function getRelationshipCard(rel) {
                     ${rel.type.toUpperCase()}
                 </span>
 
-                <div class="status-indicator ${rel.status.toLowerCase()}"></div>
+                <button
+                    class="delete-btn"
+                    title="Remove from relationship display"
+                    onclick="remove_relationship('${rel.id}')"
+                >
+                    ×
+                </button>
             </div>
 
             <div class="card-body">
@@ -120,7 +216,8 @@ SERVICE SIDEBAR
 ===================================================== */
 
 function getDraggableServiceCard(service) {
-    const payload = btoa(JSON.stringify(service));
+    // Encode
+    const payload = btoa(encodeURIComponent(JSON.stringify(service)));
 
     return `
         <div
@@ -198,7 +295,8 @@ function handleZoneDrop(event) {
     const payload = event.dataTransfer.getData('text/plain');
 
     try {
-        const service = JSON.parse(atob(payload));
+        const decoded = decodeURIComponent(atob(payload));
+        const service = JSON.parse(decoded);
 
         const zoneRect = $('drop-editor-zone')
             .getBoundingClientRect();
@@ -233,6 +331,9 @@ function buildCanvasNode(service, x, y) {
     const node = createElement('div');
 
     const offset = getSpawnOffset();
+
+    const payload = btoa(encodeURIComponent(JSON.stringify(service)));
+    node.setAttribute('data-service', payload);
 
     node.className = getNodeClass(service);
 
@@ -363,11 +464,13 @@ async function handleNodeConnectionClick(targetNode) {
         const result = await showConnectionModal();
         if(result){
             console.log("Adding connection:", result);
+            const newRel = make_relationship(result.type, sourceNode, targetNode, result.condition);
+            add_relationship(newRel);
+
             relationshipState.connections.push({
                 from: sourceNode,
                 to: targetNode,
                 type: result.type,
-                condition: result.condition
             });
             drawConnections();
         }
@@ -534,7 +637,7 @@ function initRelationshipsTab() {
     console.log('Relationships initialized');
 
     const sorted = sortRelationships(
-        mockRelationships
+        relationships
     );
 
     renderRelationshipLists(
@@ -551,7 +654,7 @@ function initRelationshipsTab() {
         console.log('Updating relationships...');
 
         const updated = sortRelationships(
-            mockRelationships
+            relationships
         );
 
         renderRelationshipLists(
@@ -575,3 +678,4 @@ function cleanupRelationshipsTab() {
         relationshipState.interval = null;
     }
 }
+
