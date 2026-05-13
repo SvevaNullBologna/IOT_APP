@@ -114,3 +114,55 @@
     z-index: 0;
     pointer-events: none;
 }
+
+/* Container for Submit and Clear */
+#relationships-buttons {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    padding: 15px;
+    background: var(--relationship-editor-background);
+    border-bottom: 1px solid var(--relationship-editor-border);
+}
+
+/* Base button styling */
+#relationships-buttons input[type="button"] {
+    padding: 8px 24px;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s ease;
+    font-family: inherit;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Submit Button - The Primary Action */
+#submit-relationships-button {
+    background: var(--accent-color);
+    color: var(--accent-text);
+    box-shadow: 0 2px 8px var(--outline-shadow-sensor-service-in-zone);
+}
+
+#submit-relationships-button:hover {
+    filter: brightness(1.1);
+    transform: translateY(-1px);
+}
+
+/* Clear Button - The Secondary/Danger Action */
+#clear-relationships-button {
+    background: transparent;
+    color: var(--text-main);
+    border: 1px solid var(--border-color) !important;
+}
+
+#clear-relationships-button:hover {
+    background: var(--delete-button-background);
+    color: var(--text-main);
+    border-color: var(--delete-button-background) !important;
+}
+
+#relationships-buttons input[type="button"]:active {
+    transform: scale(0.96);
+}

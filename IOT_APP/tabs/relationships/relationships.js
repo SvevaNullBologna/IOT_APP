@@ -484,14 +484,12 @@ async function handleNodeConnectionClick(targetNode) {
     try{
         const result = await showConnectionModal();
         if(result){
-            console.log("Adding connection:", result);
-            const newRel = make_relationship(result.type, sourceNode, targetNode, result.condition);
-            add_relationship(newRel);
-
+            
             relationshipState.connections.push({
                 from: sourceNode,
                 to: targetNode,
                 type: result.type,
+                condition: result.condition 
             });
             drawConnections();
         }
@@ -648,6 +646,70 @@ function getNodeCenter(node, zoneRect) {
     };
 }
 
+/* =====================================================
+
+SUMBIT RELATIONSHIP BUTTON
+
+===================================================== */
+
+function submit_relationships() {
+    // 1. Check if there are actually any new connections to save
+    if (relationshipState.connections.length === 0) {
+        console.warn("No new connections to submit.");
+        return;
+    }
+
+    // 2. Convert each visual connection into a formal relationship object
+    relationshipState.connections.forEach(conn => {
+        // We pass the stored data from the visual connection
+        const newRel = make_relationship(
+            conn.type, 
+            conn.from, 
+            conn.to, 
+            conn.condition // Ensure this was stored in handleNodeConnectionClick
+        );
+
+        if (newRel) {
+            relationships.push(newRel);
+        }
+    });
+
+    // 3. Clear the Canvas (The "Dropzone")
+    const zone = $('drop-editor-zone');
+    // Remove all nodes (cards)
+    zone.querySelectorAll('.canvas-node').forEach(node => node.remove());
+    
+    // 4. Clear the state and visual lines
+    relationshipState.connections = [];
+    relationshipState.spawnCounter = 0;
+    drawConnections(); // This will clear the SVG paths
+
+    // 5. Update the Sidebar Lists
+    const sorted = sortRelationships(relationships);
+    renderRelationshipLists(sorted.conditions, sorted.orders);
+
+    console.log("Relationships submitted and canvas cleared.");
+}
+
+
+/* =====================================================
+
+CLEAR CANVAS BUTTON
+
+===================================================== */
+
+function clear_canvas() {
+    if (confirm("Are you sure you want to discard all unsaved connections?")) {
+        const zone = $('drop-editor-zone');
+        zone.querySelectorAll('.canvas-node').forEach(node => node.remove());
+        
+        relationshipState.connections = [];
+        relationshipState.spawnCounter = 0;
+        drawConnections();
+        
+        console.log("Canvas cleared without saving.");
+    }
+}
 
 /* =====================================================
 TAB LIFECYCLE
