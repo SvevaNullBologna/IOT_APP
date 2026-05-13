@@ -1,47 +1,61 @@
 /* =====================================================
 RELATIONSHIP
 ====================================================== */
+
 const relationships = [
     // Condition-based: B runs if A returns a specific value
     {
+        id: 1,
         nameA: "Kitchen Temp Sensor", 
         nameB: "Smart Fan", 
         typeA: "Sensor", 
         typeB: "Actuator", 
         type: "condition", // Used for sortRelationships()
         condition: "> 25°C", 
-        status: "Active"
     },
     {
+        id: 2,
         nameA: "Front Door Lock", 
         nameB: "Hallway Light", 
         typeA: "Actuator", 
         typeB: "Actuator", 
         type: "condition",
-        condition: "Unlocked", 
-        status: "Active"
+        condition: "Unlocked"
     },
     
     // Order-based: B runs after A completes (regardless of value)
     {
+        id:3,
         nameA: "Security System", 
         nameB: "Email Notifier", 
         typeA: "Actuator", 
         typeB: "Service", 
         type: "order", 
-        condition: null, // Order-based logic has no specific value condition
-        status: "Active"
+        condition: null // Order-based logic has no specific value condition
     },
     {
+        id: 4,
         nameA: "Morning Alarm", 
         nameB: "Coffee Maker", 
         typeA: "Service", 
         typeB: "Actuator", 
         type: "order", 
-        condition: null, 
-        status: "Offline"
+        condition: null 
     }
 ];
+
+const deletedIDs = [];
+
+function getID(){
+    if(deletedIDs.length>0){
+        deletedIDs.sort((a,b)=>a-b);
+        return deletedIDs.shift();
+    }
+    const maxID = relationships.reduce((max, r)=> Math.max(max, r.id),0);
+    return maxID + 1;
+}
+
+
 
 function make_relationship(type, nodeA, nodeB, condition = null){
     try{
@@ -49,13 +63,13 @@ function make_relationship(type, nodeA, nodeB, condition = null){
         const serviceB = JSON.parse(decodeURIComponent(atob(nodeB.getAttribute('data-service'))));
 
         const newRel = {
+            id : getID(),
             nameA: serviceA.service_name,
             nameB: serviceB.service_name,
             typeA: serviceA.type,
             typeB: serviceB.type,
             type: type,
-            condition: condition,
-            status: "Active"
+            condition: condition
         };
         if (type === CONNECTION_TYPES.ORDER){
             newRel.condition = null;
@@ -77,15 +91,22 @@ function add_relationship(newRel){
     renderRelationshipLists(sorted.conditions, sorted.orders);
 }
 
-function remove_relationship(relId){
-    const index = relationships.findIndex(r=> r.id === relId);
-    if(index!==-1){
-        relationships.splice(index,1);
+function remove_relationship(relId) {
+    // Ensure we are comparing numbers to numbers
+    const idToMatch = Number(relId);
+    const index = relationships.findIndex(r => r.id === idToMatch);
+    
+    if (index !== -1) {
+        // Recycle the ID before removing the object
+        deletedIDs.push(idToMatch);
+        
+        relationships.splice(index, 1);
         
         const sorted = sortRelationships(relationships);
         renderRelationshipLists(sorted.conditions, sorted.orders);
+        
+        console.log(`Removed ID: ${idToMatch}. Available for recycle:`, deletedIDs);
     }
-    
 }
 
 /* =====================================================
@@ -149,7 +170,7 @@ function getRelationshipCard(rel) {
                 <button
                     class="delete-btn"
                     title="Remove from relationship display"
-                    onclick="remove_relationship('${rel.id}')"
+                    onclick="remove_relationship(${rel.id})"
                 >
                     ×
                 </button>
