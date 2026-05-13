@@ -16,7 +16,8 @@ const relationshipState = {
     interval: null,
     connectionSource: null,
     connections: [],
-    spawnCounter: 0
+    spawnCounter: 0,
+    isWaitingForModal: false
 };
 
 
@@ -329,7 +330,7 @@ function stopEvent(event) {
     event.stopPropagation();
 }
 
-function handleNodeConnectionClick(targetNode) {
+async function handleNodeConnectionClick(targetNode) {
 
     if (!relationshipState.connectionSource) {
 
@@ -354,25 +355,32 @@ function handleNodeConnectionClick(targetNode) {
         return;
     }
 
-    const type = confirm(
-        "OK for 'Order Based', Cancel for 'Condition Based'"
-    )
-        ? CONNECTION_TYPES.ORDER
-        : CONNECTION_TYPES.CONDITION;
+    const sourceNode = relationshipState.connectionSource;
 
-    relationshipState.connections.push({
-        from: relationshipState.connectionSource,
-        to: targetNode,
-        type
-    });
+    relationshipState.isWaitingForModal = true;
 
-    relationshipState.connectionSource.style.outline = 'none';
+    try{
+        const result = await showConnectionModal();
+        if(result){
+            console.log("Adding connection:", result);
+            relationshipState.connections.push({
+                from: sourceNode,
+                to: targetNode,
+                type: result.type,
+                condition: result.condition
+            });
+            drawConnections();
+        }
+    }
+    finally{
+        if (sourceNode) sourceNode.style.outline = 'none';
+        relationshipState.connectionSource = null;
+        relationshipState.isWaitingForModal = false;
 
-    relationshipState.connectionSource = null;
+        drawConnections();
+    }
 
-    drawConnections();
 }
-
 
 /* =====================================================
 NODE MOVEMENT
