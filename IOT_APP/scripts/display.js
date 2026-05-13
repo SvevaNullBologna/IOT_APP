@@ -1,23 +1,4 @@
 
-// Example data structure based on "Identity" and "Service" messages
-
-const mockDevices = [
-    {hardware_id: "raspberry", space_id: "VSS", status: "Active"},
-    {hardware_id: "arduino", space_id: "VSS", status: "Active"},
-    {hardware_id: "chromecast", space_id: "VSS", status: "Active"}
-];
-
-
-const mockServices = [
-    { service_name: "Living Room Light", service_id : "led_4", API : "spaceholder", thing_id : "raspberry", type: "Actuator", status: "Active" },
-    { service_name: "Kitchen Temp Sensor", service_id : "temp_sens_1", API : "spaceholder",  thing_id : "raspberry", type: "Sensor", status: "Active" },
-    { service_name: "Front Door Lock", service_id : "lock_00", API : "spaceholder",  thing_id : "arduino",  type: "Actuator", status: "Offline" },
-    { service_name: "Desk workers monitor", service_id : "monitor_1", API : "spaceholder",  thing_id : "chromecast", type: "Sensor", status: "Offline" },
-    { service_name: "Laser", service_id : "laser_111", type: "Actuator", API : "spaceholder",  thing_id : "raspberry", status: "Offline" }
-];
-
-
-
 function renderList(html, containerId) {
 
     const container = document.getElementById(containerId);

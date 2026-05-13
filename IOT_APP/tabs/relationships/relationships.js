@@ -44,6 +44,7 @@ const relationships = [
     }
 ];
 
+
 const deletedIDs = [];
 
 function getID(){
@@ -107,6 +108,18 @@ function remove_relationship(relId) {
         
         console.log(`Removed ID: ${idToMatch}. Available for recycle:`, deletedIDs);
     }
+}
+
+
+/** MEMORY **/
+
+function store_Relationships(relationships){
+    localStorage.setItem('relationships', JSON.stringify(relationships));
+}
+
+function get_Relationships(){
+    const data = localStorage.getItem('relationships');
+    return data ? JSON.parse(data) : [];
 }
 
 /* =====================================================
@@ -267,11 +280,11 @@ function renderDraggableServicesList() {
 
     if (!container) return;
 
-    const sensors = mockServices.filter(
+    const sensors = services.filter(
         service => service.type === SERVICE_TYPES.SENSOR
     );
 
-    const actuators = mockServices.filter(
+    const actuators = services.filter(
         service => service.type === SERVICE_TYPES.ACTUATOR
     );
 

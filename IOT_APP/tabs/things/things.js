@@ -1,5 +1,25 @@
 let thingsInterval = null;
 
+things = [
+    {hardware_id: "raspberry", space_id: "VSS", status: "Active"},
+    {hardware_id: "arduino", space_id: "VSS", status: "Active"},
+    {hardware_id: "chromecast", space_id: "VSS", status: "Active"}
+    ];
+
+
+
+function store_Things(things){
+    localStorage.setItem('things', JSON.stringify(things));
+}
+
+function get_Things(){
+    const data = localStorage.getItem('things');
+    return data ? JSON.parse(data) : [];
+}
+
+
+
+
 
 function readThingMessage(){
     //TODO
@@ -35,7 +55,7 @@ function initThingsTab() {
     console.log("INIT things");
 
     //ADD THE DATA INPUT AND DELETE THE MOCK 
-    showThingsList(mockDevices); 
+    showThingsList(things); 
 
     thingsInterval = setInterval(() => {
         console.log("updating things...");

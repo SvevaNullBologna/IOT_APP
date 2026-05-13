@@ -1,5 +1,26 @@
 let servicesInterval = null;
 
+
+services = [
+    { service_name: "Living Room Light", service_id : "led_4", API : "spaceholder", thing_id : "raspberry", type: "Actuator", status: "Active" },
+    { service_name: "Kitchen Temp Sensor", service_id : "temp_sens_1", API : "spaceholder",  thing_id : "raspberry", type: "Sensor", status: "Active" },
+    { service_name: "Front Door Lock", service_id : "lock_00", API : "spaceholder",  thing_id : "arduino",  type: "Actuator", status: "Offline" },
+    { service_name: "Desk workers monitor", service_id : "monitor_1", API : "spaceholder",  thing_id : "chromecast", type: "Sensor", status: "Offline" },
+    { service_name: "Laser", service_id : "laser_111", type: "Actuator", API : "spaceholder",  thing_id : "raspberry", status: "Offline" }
+    ];
+
+
+function store_Services(services){
+    localStorage.setItem('services', JSON.stringify(services));
+}
+
+function get_Services(){
+    const data = localStorage.getItem('services'); 
+    return data ? JSON.parse(data) : [];   
+}
+
+
+
 function readServiceMessage(){
     //
 }
@@ -47,7 +68,7 @@ function showServicesLists(actuator_list, sensor_list){
 function initServicesTab() {
     console.log("Services initialized");
 
-    const sorted = sortServices(mockServices);
+    const sorted = sortServices(services);
     showServicesLists(sorted.actuators, sorted.sensors, );
 
     servicesInterval = setInterval(() => {
