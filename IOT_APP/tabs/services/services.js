@@ -21,7 +21,7 @@ function get_Services(){
 
 
 
-function readServiceMessage(service_tweet){
+function readServiceMessage(tweet){
     const serviceId = tweet['Entity ID'];
 
     let service = currentServices.find(s => s.service_id === serviceId);
@@ -39,6 +39,9 @@ function readServiceMessage(service_tweet){
             status: "Active"
         });
     }
+
+    const sorted = sortServices(services);
+    showServicesLists(sorted.actuators, sorted.sensors);
 }
 
 function getServiceCard(service){
@@ -85,7 +88,7 @@ function initServicesTab() {
     console.log("Services initialized");
 
     const sorted = sortServices(services);
-    showServicesLists(sorted.actuators, sorted.sensors, );
+    showServicesLists(sorted.actuators, sorted.sensors );
 
     servicesInterval = setInterval(() => {
         console.log("updating things...");

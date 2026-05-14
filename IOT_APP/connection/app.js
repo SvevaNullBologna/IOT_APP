@@ -1,40 +1,64 @@
-//main application logic: connects UI to ATLASBRIDGE and handles UI logic
-
+// connection/app.js
 import { AtlasBridge } from './AtlasBridge.js';
 
 const atlas = new AtlasBridge();
-
 let unsubscribe = null;
 
+/**
+ * Avvia l'ascolto dei tweet dal bridge
+ */
 function startAtlasListener() {
+    // Evita sottoscrizioni multiple
     if (unsubscribe) unsubscribe();
 
+    console.log("Listener Atlas avviato...");
     unsubscribe = atlas.onTweet((tweet) => {
-        console.log("Tweet received:", tweet);
+        console.log("Tweet ricevuto dal Bridge:", tweet);
         read_atlas_tweet(tweet);
     });
 }
 
+/**
+ * Ferma l'ascolto
+ */
 function stopAtlasListener() {
     if (unsubscribe) {
         unsubscribe();
         unsubscribe = null;
+        console.log("Listener Atlas fermato.");
     }
 }
 
+/**
+ * Smista i messaggi alle funzioni globali definite in things.js e services.js
+ */
 function read_atlas_tweet(tweet) {
-    console.log("UI update:", tweet);
-
-    // example UI injection
-    const container = document.getElementById("main-content-area");
-
-    const div = document.createElement("div");
-    div.textContent = JSON.stringify(tweet);
-
-    container.appendChild(div);
+    const type = tweet['Tweet Type'];
+    
+    if (type === 'Service') {
+        // Usiamo window. per sicurezza dato che sono definite in script globali
+        if (typeof window.readServiceMessage === 'function') {
+            window.readServiceMessage(tweet);
+        } else {
+            console.warn("Funzione readServiceMessage non ancora caricata.");
+        }
+    } else if (type === 'Thing') {
+        if (typeof window.readThingMessage === 'function') {
+            window.readThingMessage(tweet);
+        } else {
+            console.warn("Funzione readThingMessage non ancora caricata.");
+        }
+    }
 }
 
-// auto start when page loads
+// Avvio automatico al caricamento della pagina
 window.addEventListener("DOMContentLoaded", () => {
     startAtlasListener();
 });
+
+// Esponiamo le funzioni all'oggetto window per poterle usare 
+// altrove o testarle dalla console (F12)
+window.getAtlasState = () => atlasState;
+window.startAtlasListener = startAtlasListener;
+window.stopAtlasListener = stopAtlasListener;
+window.read_atlas_tweet = read_atlas_tweet;

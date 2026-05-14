@@ -2,7 +2,7 @@
 
 // atlasBridge.js
 export class AtlasBridge {//it wraps the socket
-    constructor(socketUrl = 'http://localhost:3000') {
+    constructor(socketUrl = 'http://127.0.0.1:3000') {
         this.socket = window.io(socketUrl); //connects Websocket to server node
         this.handlers = new Set(); //callback list, so we don't get duplicates
         this.connected = false; //connection state
@@ -18,12 +18,8 @@ export class AtlasBridge {//it wraps the socket
     }
 
     _parse(data) {
-        try {
-            return JSON.parse(data);
-        } catch {
-            return { raw: data };
-        }
-    }
+    return (typeof data === 'object') ? data : JSON.parse(data);
+}
 
     _dispatch(tweet) {
         for (const h of this.handlers) {

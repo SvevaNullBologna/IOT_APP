@@ -9,7 +9,9 @@ const PORT = 1235;
 
 const httpServer = http.createServer();
 const io = new Server(httpServer, {
-    cors: {origin: "*"}
+    cors: {origin: "*",
+        methods: ["GET", "POST"]
+    }
 });
 
 // Function to find local IP (exactly like your Python connect method)
@@ -84,3 +86,9 @@ server.on('listening', () => {
 
 // IMPORTANT: Bind to the local IP specifically, just like your Python code did
 server.bind(PORT, localIP);
+
+const WEB_PORT = 3000;
+    httpServer.listen(WEB_PORT, () => {
+        console.log(`Web interface socket ready on port ${WEB_PORT}`);
+    });
+    

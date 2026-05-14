@@ -34,6 +34,8 @@ function readThingMessage(tweet){
             status: "Active"
         });
     }
+
+    showThingsList();
 }
 
 function getThingCard(device) {
