@@ -21,8 +21,24 @@ function get_Services(){
 
 
 
-function readServiceMessage(){
-    //
+function readServiceMessage(service_tweet){
+    const serviceId = tweet['Entity ID'];
+
+    let service = currentServices.find(s => s.service_id === serviceId);
+
+    if (service) {
+        service.status = "Active";
+        service.API = tweet['API']; // Salviamo l'API pulita
+    } else {
+        services.push({
+            service_name: tweet['Name'],
+            service_id: serviceId,
+            API: tweet['API'],
+            thing_id: tweet['Thing ID'],
+            type: tweet['Type'],
+            status: "Active"
+        });
+    }
 }
 
 function getServiceCard(service){

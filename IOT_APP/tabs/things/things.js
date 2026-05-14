@@ -18,11 +18,22 @@ function get_Things(){
 }
 
 
+function readThingMessage(tweet){
+    const hardwareId = tweet['Thing ID'];
 
+    // does it already exist?
+    let thing = currentThings.find(t => t.hardware_id === hardwareId);
 
-
-function readThingMessage(){
-    //TODO
+    if (thing) {
+        thing.status = "Active";
+        thing.space_id = tweet['Space ID'] || thing.space_id;
+    } else {
+        currentThings.push({
+            hardware_id: hardwareId,
+            space_id: tweet['Space ID'],
+            status: "Active"
+        });
+    }
 }
 
 function getThingCard(device) {
