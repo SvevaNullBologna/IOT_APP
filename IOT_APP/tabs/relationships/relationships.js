@@ -2,47 +2,7 @@
 RELATIONSHIP
 ====================================================== */
 
-const relationships = [
-    // Condition-based: B runs if A returns a specific value
-    {
-        id: 1,
-        nameA: "Kitchen Temp Sensor", 
-        nameB: "Smart Fan", 
-        typeA: "Sensor", 
-        typeB: "Actuator", 
-        type: "condition", // Used for sortRelationships()
-        condition: "> 25°C", 
-    },
-    {
-        id: 2,
-        nameA: "Front Door Lock", 
-        nameB: "Hallway Light", 
-        typeA: "Actuator", 
-        typeB: "Actuator", 
-        type: "condition",
-        condition: "Unlocked"
-    },
-    
-    // Order-based: B runs after A completes (regardless of value)
-    {
-        id:3,
-        nameA: "Security System", 
-        nameB: "Email Notifier", 
-        typeA: "Actuator", 
-        typeB: "Service", 
-        type: "order", 
-        condition: null // Order-based logic has no specific value condition
-    },
-    {
-        id: 4,
-        nameA: "Morning Alarm", 
-        nameB: "Coffee Maker", 
-        typeA: "Service", 
-        typeB: "Actuator", 
-        type: "order", 
-        condition: null 
-    }
-];
+const relationships = [];
 
 
 const deletedIDs = [];
@@ -280,12 +240,16 @@ function renderDraggableServicesList() {
 
     if (!container) return;
 
-    const sensors = services.filter(
-        service => service.type === SERVICE_TYPES.SENSOR
+    const sensors = services.filter(service => {
+            const type = (service.type || "").toLowerCase();
+            return type === "sensor" || type === "report";
+        }
     );
 
-    const actuators = services.filter(
-        service => service.type === SERVICE_TYPES.ACTUATOR
+    const actuators = services.filter(service => {
+            const type = (service.type || "").toLowerCase();
+            return type === "actuator" || type === "action";
+        }
     );
 
     container.innerHTML = `
@@ -391,10 +355,11 @@ function getSpawnOffset() {
 }
 
 function getNodeClass(service) {
-    const typeClass =
-        service.type === SERVICE_TYPES.ACTUATOR
-            ? 'actuator-node'
-            : 'sensor-node';
+    const type = (service.type || "").toLowerCase();
+    
+    const isActuator = type === "actuator" || type === "action";
+
+    const typeClass = isActuator ? 'actuator-node' : 'sensor-node';
 
     return `iot-card canvas-node ${typeClass}`;
 }
@@ -744,21 +709,6 @@ function initRelationshipsTab() {
     renderDraggableServicesList();
 
     initDropZone();
-
-    relationshipState.interval = setInterval(() => {
-
-        console.log('Updating relationships...');
-
-        const updated = sortRelationships(
-            relationships
-        );
-
-        renderRelationshipLists(
-            updated.conditions,
-            updated.orders
-        );
-
-    }, 2000);
 }
 
 function cleanupRelationshipsTab() {

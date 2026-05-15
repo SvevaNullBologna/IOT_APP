@@ -33,6 +33,10 @@ function readServiceMessage(tweet){
 
     store_Services(services);
     showServicesLists();
+    
+    if (typeof renderDraggableServicesList === "function") {
+        renderDraggableServicesList();
+    }
 }
 
 function getServiceCard(service){
