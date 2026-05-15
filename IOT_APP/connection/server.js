@@ -41,24 +41,64 @@ server.on('error', (err) => {
 server.on('message', (msg, rinfo) => {
     const rawContent = msg.toString();
     
-    // 1. Extract the JSON block (equivalent to your .rfind in Python)
+    // 1. Extract the JSON block Announcing_tweet : { ... } => {...}
     const start = rawContent.lastIndexOf('{');
     const end = rawContent.lastIndexOf('}');
     
     if (start !== -1 && end !== -1) {
-        const block = rawContent.substring(start, end + 1);
+        let body = rawContent.substring(start + 1, end).trim();
 
-        // 2. Regex to find "key" : "value" patterns
-        // g = global, so it finds all matches
-        const pattern = /"([^"]+)"\s*:\s*"(.*)"(?=\s*[,}])/g;
+        //the json is malphormed, therefore we work with "stringswith""" : "stringwith""" , 
+        //SO we can separate key-value couples with "," 
+        //we can separate key and value with ":"
+            
         const result = {};
-        let match;
 
-        while ((match = pattern.exec(block)) !== null) {
-            // match[1] is the key, match[2] is the value
-            result[match[1]] = match[2];
+        while(body.length > 0){
+            const colonIndex = body.indexOf(':');
+            if (colonIndex === -1) break;
+
+            // EXTRACT KEY before : 
+            let keyPart = body.substring(0, colonIndex).trim();
+            if(keyPart.startsWith('"') && keyPart.endsWith('"')){
+                keyPart = keyPart.slice(1,-1);
+            }
+
+            // EXTRACT VALUE after : and before , 
+            let remaining = body.substring(colonIndex + 1).trim();
+            let valuePart = "";
+            let nextPairStart = -1;
+
+            const nextKeyMarker = remaining.match(/",\s*"[^"]+"\s*:/);
+            
+            if(nextKeyMarker && nextKeyMarker.index !== undefined){ 
+                // Slice right up to the closing quote of the current value
+                valuePart = remaining.substring(0, nextKeyMarker.index + 1).trim();
+                // The next pair starts right after the comma
+                nextPairStart = nextKeyMarker.index + 2;
+            }
+            else{
+                valuePart = remaining.trim();
+            }
+
+            if(valuePart.startsWith('"') && valuePart.endsWith('"')){
+                valuePart = valuePart.slice(1,-1);
+            }
+
+            if(keyPart){ //SAVE THE KEY/VALUE COUPLE
+                result[keyPart] = valuePart;
+            }
+
+            //advance body string
+            if(nextPairStart !== -1){
+                body = remaining.substring(nextPairStart).trim()
+            }
+            else{
+                body = "";
+            }
+            
         }
-
+       
         // 3. Log the clean version to your console
         console.log("---------------------------------");
         console.log(`CLEAN TWEET FROM: ${rinfo.address}`);

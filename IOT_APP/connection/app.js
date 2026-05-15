@@ -13,7 +13,6 @@ function startAtlasListener() {
 
     console.log("Listener Atlas avviato...");
     unsubscribe = atlas.onTweet((tweet) => {
-        console.log("Tweet ricevuto dal Bridge:", tweet);
         read_atlas_tweet(tweet);
     });
 }
@@ -34,7 +33,12 @@ function stopAtlasListener() {
  */
 function read_atlas_tweet(tweet) {
     const type = tweet['Tweet Type'];
-    
+    if(!type){
+        console.log(tweet);
+    }
+    else{
+        console.log("TYPE:",type);
+    }
     if (type === 'Service') {
         // Usiamo window. per sicurezza dato che sono definite in script globali
         if (typeof window.readServiceMessage === 'function') {
@@ -42,7 +46,7 @@ function read_atlas_tweet(tweet) {
         } else {
             console.warn("Funzione readServiceMessage non ancora caricata.");
         }
-    } else if (type === 'Thing') {
+    } else if (type === 'Identity_Entity') {
         if (typeof window.readThingMessage === 'function') {
             window.readThingMessage(tweet);
         } else {

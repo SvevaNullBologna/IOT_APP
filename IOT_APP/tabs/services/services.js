@@ -1,17 +1,7 @@
-let servicesInterval = null;
+let services = [];
 
-
-services = [
-    { service_name: "Living Room Light", service_id : "led_4", API : "spaceholder", thing_id : "raspberry", type: "Actuator", status: "Active" },
-    { service_name: "Kitchen Temp Sensor", service_id : "temp_sens_1", API : "spaceholder",  thing_id : "raspberry", type: "Sensor", status: "Active" },
-    { service_name: "Front Door Lock", service_id : "lock_00", API : "spaceholder",  thing_id : "arduino",  type: "Actuator", status: "Offline" },
-    { service_name: "Desk workers monitor", service_id : "monitor_1", API : "spaceholder",  thing_id : "chromecast", type: "Sensor", status: "Offline" },
-    { service_name: "Laser", service_id : "laser_111", type: "Actuator", API : "spaceholder",  thing_id : "raspberry", status: "Offline" }
-    ];
-
-
-function store_Services(services){
-    localStorage.setItem('services', JSON.stringify(services));
+function store_Services(servicesData){
+    localStorage.setItem('services', JSON.stringify(servicesData));
 }
 
 function get_Services(){
@@ -19,29 +9,30 @@ function get_Services(){
     return data ? JSON.parse(data) : [];   
 }
 
-
-
 function readServiceMessage(tweet){
     const serviceId = tweet['Entity ID'];
+    const serviceName = tweet['Name'];
 
-    let service = currentServices.find(s => s.service_id === serviceId);
+    if (!serviceId || !serviceName) return;
+
+    let service = services.find(s => s.service_id === serviceId && s.service_name === serviceName);
 
     if (service) {
         service.status = "Active";
-        service.API = tweet['API']; // Salviamo l'API pulita
+        service.API = tweet['API'] || service.API; 
     } else {
         services.push({
             service_name: tweet['Name'],
             service_id: serviceId,
             API: tweet['API'],
             thing_id: tweet['Thing ID'],
-            type: tweet['Type'],
+            type: tweet['Type'], // Atlas sends "Action" or "Report"
             status: "Active"
         });
     }
 
-    const sorted = sortServices(services);
-    showServicesLists(sorted.actuators, sorted.sensors);
+    store_Services(services);
+    showServicesLists();
 }
 
 function getServiceCard(service){
@@ -60,47 +51,41 @@ function getServiceCard(service){
     `;
 }
 
-function sortServices(servicesDataArray){
-    const actuators = servicesDataArray.filter(s => s.type.toLowerCase() === "actuator");
-    const sensors  = servicesDataArray.filter(s => s.type.toLowerCase() === "sensor");
+function sortServices(){
+    // Handles both your mock types (Actuator/Sensor) and Atlas types (Action/Report)
+    const actuators = services.filter(s => 
+        s.type.toLowerCase() === "actuator" || s.type.toLowerCase() === "action"
+    );
+    const sensors = services.filter(s => 
+        s.type.toLowerCase() === "sensor" || s.type.toLowerCase() === "report"
+    );
 
-    const sorter = (a, b) => a.service_name.localeCompare(b.service_name);
+    const sorter = (a, b) => (a.service_name || "").localeCompare(b.service_name || "");
 
     return { 
         actuators: actuators.sort(sorter), 
         sensors: sensors.sort(sorter)
     };
-
 }
 
-function showServicesLists(actuator_list, sensor_list){
+function showServicesLists(){
+    const sorted = sortServices();
 
-    const actuatorHTML = actuator_list.map(getServiceCard).join('');
-    const sensorHTML = sensor_list.map(getServiceCard).join('');
+    const actuatorHTML = sorted.actuators.map(getServiceCard).join('');
+    const sensorHTML = sorted.sensors.map(getServiceCard).join('');
 
-    renderList(actuatorHTML, 'services-sensors-list-container');
-    renderList(sensorHTML, 'actuators-sensors-list-container');
-    
+    renderList(actuatorHTML, 'actuators-sensors-list-container');
+    renderList(sensorHTML, 'services-sensors-list-container');
 }
-
 
 function initServicesTab() {
     console.log("Services initialized");
 
-    const sorted = sortServices(services);
-    showServicesLists(sorted.actuators, sorted.sensors );
-
-    servicesInterval = setInterval(() => {
-        console.log("updating things...");
-        const update = sortServices(mockDevices);
-        showServicesLists(update.actuators, update.sensors);
-    }, 2000);
+    // Load persistent data if available, otherwise stay with mock defaults
+    showServicesLists();
 }
+
 function cleanupServicesTab() {
     console.log("Services cleaned up");
-
-    if(servicesInterval){
-        clearInterval(servicesInterval);
-        servicesInterval = null;
-    }
+    // Completely clean of any active timers or intervals!
 }

@@ -1,15 +1,7 @@
-let thingsInterval = null;
+let things = [];
 
-things = [
-    {hardware_id: "raspberry", space_id: "VSS", status: "Active"},
-    {hardware_id: "arduino", space_id: "VSS", status: "Active"},
-    {hardware_id: "chromecast", space_id: "VSS", status: "Active"}
-    ];
-
-
-
-function store_Things(things){
-    localStorage.setItem('things', JSON.stringify(things));
+function store_Things(thingsData){
+    localStorage.setItem('things', JSON.stringify(thingsData));
 }
 
 function get_Things(){
@@ -17,29 +9,29 @@ function get_Things(){
     return data ? JSON.parse(data) : [];
 }
 
-
 function readThingMessage(tweet){
     const hardwareId = tweet['Thing ID'];
+    if (!hardwareId) return;
 
     // does it already exist?
-    let thing = currentThings.find(t => t.hardware_id === hardwareId);
+    let thing = things.find(t => t.hardware_id === hardwareId);
 
     if (thing) {
         thing.status = "Active";
         thing.space_id = tweet['Space ID'] || thing.space_id;
     } else {
-        currentThings.push({
+        things.push({
             hardware_id: hardwareId,
-            space_id: tweet['Space ID'],
+            space_id: tweet['Space ID'] || "Unknown Space",
             status: "Active"
         });
     }
 
+    store_Things(things);
     showThingsList();
 }
 
 function getThingCard(device) {
-    // Here you define the EXACT HTML for a "Thing" card
     return `
         <div class="iot-card thing-variant">
             <div class="card-header">
@@ -49,37 +41,25 @@ function getThingCard(device) {
             <div class="card-body">
                 <p class="metadata"><strong>IP Address:</strong> ${device.space_id}</p>
             </div>
-            <div class="card-footer">
-                
-            </div>
+            <div class="card-footer"></div>
         </div>
     `;
 }
 
-function showThingsList(thingsDataArray){
-    const thingsHTMLData = thingsDataArray.map(getThingCard).join('');
+function showThingsList(){
+    const thingsHTMLData = things.map(getThingCard).join('');
     renderList(thingsHTMLData, 'things-list-container');
-
 }
-
-
 
 function initThingsTab() {
     console.log("INIT things");
 
-    //ADD THE DATA INPUT AND DELETE THE MOCK 
-    showThingsList(things); 
-
-    thingsInterval = setInterval(() => {
-        console.log("updating things...");
-    }, 2000);
+    // Load persistent data if available, otherwise fallback to standard mock array
+    
+    showThingsList(); 
 }
 
 function cleanupThingsTab() {
     console.log("CLEANUP things");
-
-    if (thingsInterval) {
-        clearInterval(thingsInterval);
-        thingsInterval = null;
-    }
+    // No intervals left to clear out here anymore!
 }
