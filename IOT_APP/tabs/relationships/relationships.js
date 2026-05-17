@@ -4,7 +4,6 @@ RELATIONSHIP
 
 const relationships = [];
 
-
 const deletedIDs = [];
 
 function getID(){
@@ -240,13 +239,17 @@ function renderDraggableServicesList() {
 
     if (!container) return;
 
-    const sensors = services.filter(service => {
+    const onlineServices = services.filter(service => 
+        service.status && service.status.toLowerCase() === "active"
+    );
+
+    const sensors = onlineServices.filter(service => {
             const type = (service.type || "").toLowerCase();
             return type === "sensor" || type === "report";
         }
     );
 
-    const actuators = services.filter(service => {
+    const actuators = onlineServices.filter(service => {
             const type = (service.type || "").toLowerCase();
             return type === "actuator" || type === "action";
         }
@@ -480,6 +483,71 @@ async function handleNodeConnectionClick(targetNode) {
         drawConnections();
     }
 
+}
+
+/* =====================================================
+MODAL LOGIC - EMBEDDED CONTEXTS
+====================================================== */
+
+function showConnectionModal() {
+    return new Promise((resolve) => {
+        const overlay = createElement('div', 'modal-overlay');
+        
+        overlay.innerHTML = `
+            <div class="connection-modal">
+                <h3>Select Connection Type</h3>
+                
+                <div class="modal-options-row">
+                    <button class="modal-btn" id="btn-opt-order">Order Based</button>
+                    <button class="modal-btn" id="btn-opt-condition-toggle">Condition Based</button>
+                </div>
+
+                <div class="condition-input-wrapper" id="condition-field-block" style="display: none;">
+                    <input type="text" class="modal-input" id="modal-cond-text" placeholder="e.g. value > 10" />
+                    <button class="modal-btn action-set-condition" id="btn-opt-set-condition">Set Condition</button>
+                </div>
+
+                <hr class="modal-divider" />
+                
+                <button class="modal-btn-cancel" id="btn-opt-cancel">Cancel</button>
+            </div>
+        `;
+        
+        document.body.appendChild(overlay);
+        
+        const condBlock = overlay.querySelector('#condition-field-block');
+        const condInput = overlay.querySelector('#modal-cond-text');
+        
+        const closeModal = (value) => {
+            overlay.remove();
+            resolve(value); 
+        };
+
+        // Order Based action choice
+        overlay.querySelector('#btn-opt-order').addEventListener('click', () => {
+            closeModal({ type: CONNECTION_TYPES.ORDER, condition: null });
+        });
+
+        // Condition Based main button action -> reveals input fields smoothly
+        overlay.querySelector('#btn-opt-condition-toggle').addEventListener('click', () => {
+            condBlock.style.display = 'flex';
+            condInput.focus();
+        });
+
+        // Submission click processing logic for the custom text statement
+        overlay.querySelector('#btn-opt-set-condition').addEventListener('click', () => {
+            const expression = condInput.value.trim();
+            if (!expression) {
+                condInput.style.borderColor = '#ff6b6b';
+                return;
+            }
+            closeModal({ type: CONNECTION_TYPES.CONDITION, condition: expression });
+        });
+
+        // Cancel choice handling
+        overlay.querySelector('#btn-opt-cancel').addEventListener('click', () => closeModal(null));
+        overlay.addEventListener('click', (e) => { if (e.target === overlay) closeModal(null); });
+    });
 }
 
 /* =====================================================

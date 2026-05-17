@@ -1,5 +1,17 @@
 let services = [];
 
+window.all_services_status = all_services_status;
+window.readServiceMessage = readServiceMessage;
+
+function all_services_status(status){
+    services.forEach(service => {
+       service.status = status; 
+    });
+
+    showServicesLists();
+} 
+
+
 function store_Services(servicesData){
     localStorage.setItem('services', JSON.stringify(servicesData));
 }
@@ -12,6 +24,7 @@ function get_Services(){
 function readServiceMessage(tweet){
     const serviceId = tweet['Entity ID'];
     const serviceName = tweet['Name'];
+    const thingId = tweet['Thing ID'];
 
     if (!serviceId || !serviceName) return;
 
@@ -25,18 +38,23 @@ function readServiceMessage(tweet){
             service_name: tweet['Name'],
             service_id: serviceId,
             API: tweet['API'],
-            thing_id: tweet['Thing ID'],
+            thing_id: thingId,
             type: tweet['Type'], // Atlas sends "Action" or "Report"
             status: "Active"
         });
     }
 
-    store_Services(services);
-    showServicesLists();
+    if(thingId && typeof window.wake_thing_by_id === 'function'){
+        window.wake_thing_by_id(thingId);
+    }
     
     if (typeof renderDraggableServicesList === "function") {
         renderDraggableServicesList();
     }
+
+    store_Services(services);
+    showServicesLists();
+    
 }
 
 function getServiceCard(service){
@@ -80,6 +98,10 @@ function showServicesLists(){
 
     renderList(actuatorHTML, 'actuators-sensors-list-container');
     renderList(sensorHTML, 'services-sensors-list-container');
+
+    if(typeof renderDraggableServicesList === 'function'){ //keeping drag and rop panel synchronized with active/inactive 
+        renderDraggableServicesList();
+    }
 }
 
 function initServicesTab() {

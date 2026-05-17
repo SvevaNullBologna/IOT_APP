@@ -1,5 +1,43 @@
 let things = [];
 
+window.all_things_status = all_things_status;
+window.readThingMessage = readThingMessage;
+
+function all_things_status(status){
+    things.forEach(thing => {
+       thing.status = status; 
+    });
+    
+    showThingsList();
+} 
+
+// Dependency link: called directly when a service linked to this thing is found running
+function wake_thing_by_id(hardwareId) {
+    let thing = things.find(t => t.hardware_id === hardwareId);
+    
+    if (thing) {
+        if (thing.status !== "Active") {
+            console.log(`Waking up parent Thing node: ${hardwareId} due to incoming service activity.`);
+            thing.status = "Active";
+            
+            store_Things(things);
+            showThingsList();
+        }
+    } else {
+        // Fallback: If the thing data structure wasn't declared yet, initialize it on-the-fly
+        things.push({
+            hardware_id: hardwareId,
+            space_id: "Discovered via Service",
+            status: "Active"
+        });
+        store_Things(things);
+        showThingsList();
+    }
+}
+
+// Make sure it's accessible globally by adding it to the bottom of things.js
+window.wake_thing_by_id = wake_thing_by_id;
+
 function store_Things(thingsData){
     localStorage.setItem('things', JSON.stringify(thingsData));
 }

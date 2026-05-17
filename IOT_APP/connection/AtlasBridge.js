@@ -5,11 +5,19 @@ export class AtlasBridge {//it wraps the socket
     constructor(socketUrl = 'http://127.0.0.1:3000') {
         this.socket = window.io(socketUrl); //connects Websocket to server node
         this.handlers = new Set(); //callback list, so we don't get duplicates
+        this.statusHandlers = new Set();
         this.connected = false; //connection state
 
         this.socket.on('connect', () => { //when the WebSocket connects
             this.connected = true;
             console.log('[AtlasBridge] connected');
+            this._dispatchStatus(true);
+        });
+
+        this.socket.on('disconnect',() => {
+            this.connected = false;
+            console.warn('[AtlasBridge] disconnected / went offline');
+            this._dispatchStatus(false);
         });
 
         this.socket.on('atlas-tweet', (data) => { //receives the event from server Node
@@ -27,9 +35,20 @@ export class AtlasBridge {//it wraps the socket
         }
     }
 
+    _dispatchStatus(isOnline){ //alerts the app layer about connection changes
+        for(const h of this.statusHandlers){
+            h(isOnline);
+        }
+    }
+
     onTweet(handler) {
         this.handlers.add(handler);
         return () => this.handlers.delete(handler); // unsubscribe
+    }
+
+    onStatusChange(handler){ //setup a listener for online/offline events
+        this.statusHandlers.add(handler);
+        return () => this.statusHandlers.delete(handler);
     }
 
     isConnected() {

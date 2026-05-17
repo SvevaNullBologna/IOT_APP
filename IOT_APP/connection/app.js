@@ -2,18 +2,38 @@
 import { AtlasBridge } from './AtlasBridge.js';
 
 const atlas = new AtlasBridge();
-let unsubscribe = null;
+let unsubscribeTweet = null;
+let unsubscribeStatus = null;
 
 /**
  * Avvia l'ascolto dei tweet dal bridge
  */
 function startAtlasListener() {
     // Evita sottoscrizioni multiple
-    if (unsubscribe) unsubscribe();
+    if (unsubscribeTweet) unsubscribeTweet();
+    if (unsubscribeStatus) unsubscribeStatus();
 
     console.log("Listener Atlas avviato...");
-    unsubscribe = atlas.onTweet((tweet) => {
+
+    unsubscribeTweet = atlas.onTweet((tweet) => {
         read_atlas_tweet(tweet);
+    });
+
+    unsubscribeStatus = atlas.onStatusChange((isOnline) => {
+        if(!isOnline){
+            console.log("AtlasBridge disconnected. Forcing things and services offline.");
+
+            if(typeof window.all_things_status === 'function'){
+                window.all_things_status('Offline');
+            }
+            if(typeof window.all_services_status === 'function'){
+                window.all_services_status('Offline');
+            }
+
+        }
+        else{
+            console.log("AtlasBridge back online! Waiting for heartbeat tweets...");
+        }
     });
 }
 
@@ -21,11 +41,17 @@ function startAtlasListener() {
  * Ferma l'ascolto
  */
 function stopAtlasListener() {
-    if (unsubscribe) {
-        unsubscribe();
-        unsubscribe = null;
+    if (unsubscribeTweet) {
+        unsubscribeTweet();
+        unsubscribeTweet = null;
         console.log("Listener Atlas fermato.");
     }
+    if(unsubscribeStatus){
+        unsubscribeStatus();
+        unsubscribeStatus = null;
+    }
+
+    console.log("Listener Atlas fermato.");
 }
 
 /**
