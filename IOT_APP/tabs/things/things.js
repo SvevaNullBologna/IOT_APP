@@ -52,11 +52,18 @@ function readThingMessage(tweet){
     if (!hardwareId) return;
 
     // does it already exist?
+    const realSpaceId = tweet['Space ID'] || "Unkbnown Space";
     let thing = things.find(t => t.hardware_id === hardwareId);
 
+    
     if (thing) {
         thing.status = "Active";
-        thing.space_id = tweet['Space ID'] || thing.space_id;
+       
+        if (thing.space_id === "Discovered via Service" || tweet['Space ID']) {
+            thing.space_id = realSpaceId;
+        }
+        
+        console.log(`[Things] Updated identity parameters for node: ${hardwareId}`);
     } else {
         things.push({
             hardware_id: hardwareId,
@@ -93,7 +100,6 @@ function initThingsTab() {
     console.log("INIT things");
 
     // Load persistent data if available, otherwise fallback to standard mock array
-    
     showThingsList(); 
 }
 
