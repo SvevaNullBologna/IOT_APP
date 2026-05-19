@@ -1,64 +1,29 @@
 <div class="apps-container">
 
-    <!-- LEFT SIDE -->
-    <div class="apps-sidebar">
+    <h4> SAVED APPS </h4>
+    <div id="saved-apps-container"></div> <!-- upload app on relationship editor to see connections and modify -->
+    
+    
 
-        <button id="new-app-btn">
-            New App
-        </button>
+<!-- IMPORTED RELATIONSHIP THINGS -->
 
-        <h3>Saved Apps</h3>
 
-        <div id="saved-apps-list"></div>
-
+<h4> APP EDITOR </h4><!-- GUI DRAG AND DROP -->
+<div id="app-editor" style="display: flex; height: 500px; border: 1px solid var(--relationship-editor-border);">
+    <div id="things-editor-zone"></div>
+    <div id="drop-editor-zone">
+        <svg id="canvas-connections" style="position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none;">
+            <defs>
+                <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orientation="auto">
+                    <polygon points="0 0,10 3.5, 0 7" fill="var(--accent-color)"></polygon>
+                </marker>
+            </defs>
+        </svg>
     </div>
-
-    <!-- CENTER -->
-    <div class="app-editor-container">
-
-        <input
-            id="app-name"
-            placeholder="App Name"
-        />
-
-        <!-- APP EDITOR -->
-        <div id="app-editor">
-            <p>Drag services here...</p>
-        </div>
-
-        <!-- BUTTONS -->
-        <div class="editor-buttons">
-
-            <button id="save-app-btn">
-                Save
-            </button>
-
-            <button id="finalize-app-btn">
-                Finalize
-            </button>
-
-            <button id="clear-app-btn">
-                Clear
-            </button>
-
-        </div>
-
-        <!-- RELATIONSHIP BUTTONS -->
-        <div class="relationship-buttons">
-
-            <button id="add-order-btn">
-                Add Order Relationship
-            </button>
-
-            <button id="add-condition-btn">
-                Add Condition Relationship
-            </button>
-
-        </div>
-
-    </div>
-
 </div>
 
-<!-- STATUS PANEL -->
-<div id="status-panel"></div>
+<div id="relationships-buttons">
+    <input id="app_name" placeholder="app name"/>
+    <input type="button" name="submit-relationships" id="submit-relationships-button" value="SAVE" onclick="submit_relationships()"/>
+    <input type="button" name="clear-relationships" id="clear-relationships-button" value="CLEAR" onclick="clear_canvas()"/>
+</div>
