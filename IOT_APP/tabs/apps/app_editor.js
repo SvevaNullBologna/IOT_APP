@@ -2,6 +2,8 @@
 STATE & CONFIGURATION
 ===================================================== */
 
+const app_folder = "/data";
+
 const SERVICE_TYPES = {
     SENSOR: 'Sensor',
     ACTUATOR: 'Actuator'
@@ -523,8 +525,29 @@ function clear_canvas() {
     }
 }
 
+
+
+/* SAVE APP PART*/
+
 function isValidAppName(name) {
     return /^[a-zA-Z0-9_-]{1,20}$/.test(name);
+}
+
+function save_app(){
+    const app_name = document.getElementById('app_name');
+    if(!app_name || !isValidAppName(app_name)){
+        alert("app name not valid");
+        return;
+    }
+
+    //if()
+    //saves in xml
+    //name 
+    //relationships 
+    //services in the relationships
+
+
+    //adds on the SAVED APP list
 }
 
 /* =====================================================

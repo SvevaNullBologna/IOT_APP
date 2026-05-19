@@ -71,9 +71,9 @@ function getAppCard(app){
                 <h4 class="thing-title">${app.name}</h4>
             </div>
             <div class="card-body">
-                <button class="activate_app_button" title="runs selected app" on_click=""> |> </button>
-                <button class="stop_app_button" title="stops selected app" on_click=""> || </button>
-                <button class="delete_app_button" title="deletes selected app" on_click=""> X </button>
+                <button class="activate_app_button" title="runs selected app" on_click="run_app"> |> </button>
+                <button class="stop_app_button" title="stops selected app" on_click="stop_app"> || </button>
+                <button class="delete_app_button" title="deletes selected app" on_click="delete_app"> X </button>
             </div>
         </div>
     `;
@@ -96,9 +96,17 @@ APP MANAGER FUNCTIONS
 */
 
 
+function run_app(){
 
+}
 
+function stop_app(){
 
+}
+
+function delete_app(){
+
+}
 
 
 /* 
