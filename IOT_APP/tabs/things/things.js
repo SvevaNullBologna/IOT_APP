@@ -84,7 +84,7 @@ function getThingCard(device) {
                 <div class="status-indicator ${device.status.toLowerCase()}"></div>
             </div>
             <div class="card-body">
-                <p class="metadata"><strong>IP Address:</strong> ${device.space_id}</p>
+                <p class="metadata"><strong>space ID:</strong> ${device.space_id}</p>
             </div>
             <div class="card-footer"></div>
         </div>
