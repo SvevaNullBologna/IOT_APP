@@ -1,23 +1,64 @@
-<h3> APPS </h3>
-<!-- CREATE -->
+<div class="apps-container">
 
-<!-- UPLOAD -->
+    <!-- LEFT SIDE -->
+    <div class="apps-sidebar">
 
-<!-- MANAGE -->
-<p>
-            Lorem ipsum dolor sit amet,
-            consectetur adipiscing elit.
-            Mauris vitae
-            lacus fed quam ullamcorper
-            semper. Aliquam erat volutpat.
-            Vestibulum
-            aliquam mattis justo, sit amet
-            faucibus purus. Maecenas at sem
-            ac
-            massa iaculis porttitor.
-            Integer nec lacinia lectus, ut
-            gravida est.
-            Phasellus efficitur ultricies
-            mauris, sit amet cursus leo
-            aliquam vel.
-</p>
+        <button id="new-app-btn">
+            New App
+        </button>
+
+        <h3>Saved Apps</h3>
+
+        <div id="saved-apps-list"></div>
+
+    </div>
+
+    <!-- CENTER -->
+    <div class="app-editor-container">
+
+        <input
+            id="app-name"
+            placeholder="App Name"
+        />
+
+        <!-- APP EDITOR -->
+        <div id="app-editor">
+            <p>Drag services here...</p>
+        </div>
+
+        <!-- BUTTONS -->
+        <div class="editor-buttons">
+
+            <button id="save-app-btn">
+                Save
+            </button>
+
+            <button id="finalize-app-btn">
+                Finalize
+            </button>
+
+            <button id="clear-app-btn">
+                Clear
+            </button>
+
+        </div>
+
+        <!-- RELATIONSHIP BUTTONS -->
+        <div class="relationship-buttons">
+
+            <button id="add-order-btn">
+                Add Order Relationship
+            </button>
+
+            <button id="add-condition-btn">
+                Add Condition Relationship
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- STATUS PANEL -->
+<div id="status-panel"></div>
