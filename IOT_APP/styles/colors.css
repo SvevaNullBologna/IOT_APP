@@ -1,50 +1,50 @@
 /*COLORS*/
 
 :root {
-    /* Primary Branding */
-    --accent-color: #ffd84d;
-    /* The "Yellow" */
-    --accent-text: black;
+    --accent-color: #6366f1;
+    --accent-text: #ffffff;
 
     /* Backgrounds */
-    --bg-main: rgb(29, 29, 29);
-    --tab-bg-inactive: rgba(255, 255, 255, 0.1);
-    --tab-bg-hover: rgba(255, 255, 255, 0.2);
+    --bg-main: #0f172a;
+    --tab-bg-inactive: rgba(255, 255, 255, 0.03);
+    --tab-bg-hover: rgba(255, 255, 255, 0.08);
 
     /* Typography & Borders */
-    --text-main: rgb(231, 231, 231);
-    --border-color: rgba(49, 51, 50, 0.158);
+    --text-main: #f1f5f9;
+    --border-color: rgba(255, 255, 255, 0.08);
     --font-family: 'Poppins', sans-serif;
 
-    --tab-content-background: rgba(255, 255, 255, 0.05);
+    --tab-content-background: #1e293b;
 
-    --card-background-color: rgba(255, 255, 255, 0.05);
-    --card-hover-color: rgba(255, 255, 255, 0.1);
+    --card-background-color: #1e293b;
+    --card-hover-color: rgba(99, 102, 241, 0.1);
 
-    --active-status-color: rgb(35, 187, 81);
-    --offline-status-color: rgb(221, 25, 25);
+    --active-status-color: #10b981;
+    --offline-status-color: #ef4444;
 
     /* Relationship tab - Semantic Variables */
-    --relationship-editor-border: #444;
-    --relationship-editor-background: #2a2a2a;
-    --drop-editor-zone-background: #1e1e1e;
+    --relationship-editor-border: #334155;
+    --relationship-editor-background: #1e293b;
+    --drop-editor-zone-background: #0f172a;
 
-    --dropped-service-in-zone-background: #2a2a2a;
-    --dropped-service-in-zone-box-shadow: rgba(0, 0, 0, 0.5);
+    --dropped-service-in-zone-background: #334155;
+    --dropped-service-in-zone-box-shadow: rgba(0, 0, 0, 0.4);
 
-    --outline-actuator-service-in-zone: rgb(255, 68, 68);
-    --outline-shadow-actuator-service-in-zone: rgba(255, 68, 68, 0.4);
+    /* Actuators (Outputs/Actions) */
+    --outline-actuator-service-in-zone: #a855f7;
+    --outline-shadow-actuator-service-in-zone: rgba(168, 85, 247, 0.3);
 
-    --outline-sensor-service-in-zone: rgb(68, 170, 255);
-    --outline-shadow-sensor-service-in-zone: rgba(68, 170, 255, 0.4);
+    /* Sensors (Inputs/Data) */
+    --outline-sensor-service-in-zone: #06b6d4;
+    --outline-shadow-sensor-service-in-zone: rgba(6, 182, 212, 0.3);
 
-    --delete-button-background: rgb(221, 25, 25);
-    --delete-button-hover: rgb(180, 20, 20);
+    --delete-button-background: #ef4444;
+    --delete-button-hover: #dc2626;
 
-    --connection-modal-background: rgb(29, 29, 29);
+    --connection-modal-background: #1e293b;
 
-    --surface-1: rgba(255, 255, 255, 0.04);
-    --surface-2: rgba(255, 255, 255, 0.06);
-    --surface-3: rgba(255, 255, 255, 0.08);
-
+    /* Semantic Surface Layers */
+    --surface-1: rgba(255, 255, 255, 0.02);
+    --surface-2: rgba(255, 255, 255, 0.04);
+    --surface-3: rgba(255, 255, 255, 0.06);
 }
