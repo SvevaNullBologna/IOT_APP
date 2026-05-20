@@ -58,21 +58,23 @@ SHOW APP & DYNAMIC CARD RENDERING
 function getAppCard(app) {
     // Safely verify if this app is currently executing via our runtime engine in app.js
     const isRunning = typeof isAppRunning === 'function' && isAppRunning(app.name);
-    
+
     // Configure state appearance parameters
     const btnText = isRunning ? "Stop ⏸" : "Run ▶";
     const btnClass = isRunning ? "app-toggle-btn running" : "app-toggle-btn stopped";
     const btnAction = isRunning ? `toggle_app_state('${app.name}', false)` : `toggle_app_state('${app.name}', true)`;
 
     return `
-        <div class="iot-card thing-variant">
+        <div class="iot-card thing-variant saved-app-card">
             <div class="card-header">
-                <h4 class="thing-title">${app.name}</h4>
+                <h4 class="thing-title device-name">${app.name}</h4>
             </div>
-            <div class="card-body">
+            <div class="card-body card-actions-wrapper">
                 <!-- SINGLE DYNAMIC ACTION/FEEDBACK BUTTON -->
                 <button class="${btnClass}" onclick="${btnAction}">${btnText}</button>
-                <button class="delete_app_button" title="deletes selected app" onclick="delete_app('${app.name}')"> X </button>
+                <button class="delete_app_button" title="deletes selected app" onclick="delete_app('${app.name}')">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
             </div>
         </div>
     `;

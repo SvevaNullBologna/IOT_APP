@@ -278,3 +278,89 @@
     transform: translateY(-4px);
     border-color: rgba(99, 102, 241, 0.4);
 }
+
+/* ==========================================================================
+   SAVED APPS BUTTON INTERFACES
+   ========================================================================== */
+
+#saved-apps-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 18px;
+    margin-bottom: 24px;
+}
+
+.card-actions-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 14px;
+}
+
+.app-toggle-btn {
+    flex: 1;
+    height: 38px;
+    border: none;
+    border-radius: 10px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.15s ease, background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.app-toggle-btn.stopped {
+    background: linear-gradient(135deg, var(--accent-color, #6366f1), #818cf8);
+    color: var(--accent-text, #ffffff);
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
+}
+
+.app-toggle-btn.stopped:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(99, 102, 241, 0.35);
+}
+
+.app-toggle-btn.running {
+    background: linear-gradient(135deg, #10b981, #34d399);
+    color: #ffffff;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+}
+
+.app-toggle-btn.running:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(16, 185, 129, 0.35);
+}
+
+.app-toggle-btn:active {
+    transform: scale(0.97);
+}
+
+.delete_app_button {
+    width: 38px;
+    height: 38px;
+    flex-shrink: 0;
+    border-radius: 10px;
+    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+    background: var(--surface-2, #1e293b);
+    color: rgba(241, 245, 249, 0.4);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.delete_app_button:hover {
+    background: var(--delete-button-background, #ef4444);
+    border-color: var(--delete-button-background, #ef4444);
+    color: #ffffff;
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25);
+    transform: translateY(-2px);
+}
+
+.delete_app_button:active {
+    transform: scale(0.95);
+}
