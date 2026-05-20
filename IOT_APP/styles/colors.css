@@ -2,14 +2,15 @@
 
 :root {
     /* Primary Branding */
-    --accent-color: rgb(243, 240, 58); /* The "Yellow" */
+    --accent-color: #ffd84d;
+    /* The "Yellow" */
     --accent-text: black;
-    
+
     /* Backgrounds */
     --bg-main: rgb(29, 29, 29);
     --tab-bg-inactive: rgba(255, 255, 255, 0.1);
     --tab-bg-hover: rgba(255, 255, 255, 0.2);
-    
+
     /* Typography & Borders */
     --text-main: rgb(231, 231, 231);
     --border-color: rgba(49, 51, 50, 0.158);
@@ -27,19 +28,23 @@
     --relationship-editor-border: #444;
     --relationship-editor-background: #2a2a2a;
     --drop-editor-zone-background: #1e1e1e;
-    
+
     --dropped-service-in-zone-background: #2a2a2a;
     --dropped-service-in-zone-box-shadow: rgba(0, 0, 0, 0.5);
-    
+
     --outline-actuator-service-in-zone: rgb(255, 68, 68);
     --outline-shadow-actuator-service-in-zone: rgba(255, 68, 68, 0.4);
-    
+
     --outline-sensor-service-in-zone: rgb(68, 170, 255);
     --outline-shadow-sensor-service-in-zone: rgba(68, 170, 255, 0.4);
-    
+
     --delete-button-background: rgb(221, 25, 25);
     --delete-button-hover: rgb(180, 20, 20);
 
-    --connection-modal-background:  rgb(29, 29, 29);
+    --connection-modal-background: rgb(29, 29, 29);
+
+    --surface-1: rgba(255, 255, 255, 0.04);
+    --surface-2: rgba(255, 255, 255, 0.06);
+    --surface-3: rgba(255, 255, 255, 0.08);
 
 }

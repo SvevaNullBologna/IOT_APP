@@ -2,28 +2,34 @@
 
     <h4> SAVED APPS </h4>
     <div id="saved-apps-container"></div> <!-- upload app on relationship editor to see connections and modify -->
-    
-    
-
-<!-- IMPORTED RELATIONSHIP THINGS -->
 
 
-<h4> APP EDITOR </h4><!-- GUI DRAG AND DROP -->
-<div id="app-editor" style="display: flex; height: 500px; border: 1px solid var(--relationship-editor-border);">
-    <div id="things-editor-zone"></div>
-    <div id="drop-editor-zone">
-        <svg id="canvas-connections" style="position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none;">
-            <defs>
-                <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orientation="auto">
-                    <polygon points="0 0,10 3.5, 0 7" fill="var(--accent-color)"></polygon>
-                </marker>
-            </defs>
-        </svg>
+
+    <!-- IMPORTED RELATIONSHIP THINGS -->
+
+
+    <h4> APP EDITOR </h4><!-- GUI DRAG AND DROP -->
+    <div id="app-editor">
+        <div id="things-editor-zone"></div>
+        <div id="drop-editor-zone">
+            <div class="canvas-empty-state">
+                Drag components here to build your app
+            </div>
+            <svg id="canvas-connections"
+                style="position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none;">
+                <defs>
+                    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orientation="auto">
+                        <polygon points="0 0,10 3.5, 0 7" fill="var(--accent-color)"></polygon>
+                    </marker>
+                </defs>
+            </svg>
+        </div>
     </div>
-</div>
 
-<div id="relationships-buttons">
-    <input id="app_name" placeholder="app name"/>
-    <input type="button" name="submit-relationships" id="submit-relationships-button" value="SAVE" onclick="save_app()"/>
-    <input type="button" name="clear-relationships" id="clear-relationships-button" value="CLEAR" onclick="clear_canvas()"/>
-</div>
+    <div id="relationships-buttons">
+        <input id="app_name" placeholder="app name" />
+        <input type="button" name="submit-relationships" id="submit-relationships-button" value="SAVE"
+            onclick="save_app()" />
+        <input type="button" name="clear-relationships" id="clear-relationships-button" value="CLEAR"
+            onclick="clear_canvas()" />
+    </div>

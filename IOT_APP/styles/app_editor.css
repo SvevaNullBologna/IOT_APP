@@ -1,23 +1,84 @@
+.apps-container {
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+}
+
+#app-editor {
+    display: flex;
+
+    height: 700px;
+
+    border-radius: 24px;
+
+    overflow: hidden;
+
+    border: 1px solid rgba(255, 255, 255, 0.08);
+
+    background:
+        linear-gradient(180deg,
+            rgba(255, 255, 255, 0.04),
+            rgba(255, 255, 255, 0.02));
+
+    box-shadow:
+        0 20px 50px rgba(0, 0, 0, 0.35);
+
+    backdrop-filter: blur(18px);
+}
+
 #relationships-editor {
     display: flex;
-    height: 90%;
-    border: 1px solid var(--relationship-editor-border);
-    margin-top: 2%;
+
+    min-height: 700px;
+
+    border-radius: 20px;
+
+    overflow: hidden;
+
+    border: 1px solid rgba(255, 255, 255, 0.08);
+
+    background: rgba(255, 255, 255, 0.03);
 }
 
 #things-editor-zone {
-    width: 250px;
+    width: 300px;
+
+    padding: 24px;
+
+    background:
+        linear-gradient(180deg,
+            rgba(255, 255, 255, 0.05),
+            rgba(255, 255, 255, 0.03));
+
+    border-right:
+        1px solid rgba(255, 255, 255, 0.08);
+
     overflow-y: auto;
-    background: var(--relationship-editor-background);
-    padding: 20px;
+
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
 }
-#things-editor-zone .draggable-item{
+
+#things-editor-zone::before {
+    content: "COMPONENTS";
+
+    font-size: 0.75rem;
+    letter-spacing: 1.5px;
+    font-weight: 700;
+
+    color: #888;
+
+    margin-bottom: 8px;
+}
+
+#things-editor-zone .draggable-item {
     margin-bottom: 15px;
     display: block;
     border: 1px solid var(--border-color);
 }
 
-.sidebar-section h4{
+.sidebar-section h4 {
     margin-bottom: 30px;
     margin-bottom: 10px;
     padding-bottom: 5px;
@@ -25,42 +86,114 @@
 }
 
 #drop-editor-zone {
-    flex-grow: 1;
+    flex: 1;
+
     position: relative;
-    background: var(--drop-editor-zone-background);
-    overflow: hidden; 
+
+    overflow: hidden;
+
+    background:
+        radial-gradient(circle at center,
+            rgba(255, 255, 255, 0.03),
+            rgba(0, 0, 0, 0.2));
+
     isolation: isolate;
+}
+
+#drop-editor-zone::before {
+    content: "";
+
+    position: absolute;
+    inset: 0;
+
+    background-image:
+        linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+
+    background-size: 30px 30px;
+
+    opacity: 0.4;
+
+    pointer-events: none;
 }
 
 /* Base styling for any card on the canvas */
 .canvas-node {
     z-index: 10;
-    cursor: grab;
-    user-select: none;
-    background: var(--dropped-service-in-zone-background);
-    color: var(--text-main);
-    padding: 10px;
-    border-radius: 8px;
-    box-shadow: 0 4px 15px var(--dropped-service-in-zone-box-shadow);
-    transition: transform 0.1s ease;
+
     position: absolute;
+
+    width: 240px;
+
+    padding: 16px;
+
+    border-radius: 18px;
+
+    background:
+        linear-gradient(180deg,
+            rgba(255, 255, 255, 0.08),
+            rgba(255, 255, 255, 0.04));
+
+    border:
+        1px solid rgba(255, 255, 255, 0.08);
+
+    box-shadow:
+        0 10px 30px rgba(0, 0, 0, 0.35);
+
+    backdrop-filter: blur(12px);
+
+    cursor: grab;
+
+    user-select: none;
+
+    transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease,
+        border-color 0.2s ease;
 }
 
-.canvas-node.iot-card{
+.canvas-node.iot-card {
     width: 220px;
     display: block;
 }
 
 /* Specific styling for Actuators (Red) */
 .canvas-node.actuator-node {
-    border: 3px solid var(--outline-actuator-service-in-zone);
-    box-shadow: 0 0 10px var(--outline-shadow-actuator-service-in-zone);
+    border: 1px solid rgba(255, 68, 68, 0.5);
+
+    box-shadow:
+        0 0 0 1px rgba(255, 68, 68, 0.2),
+        0 0 25px rgba(255, 68, 68, 0.15),
+        0 10px 30px rgba(0, 0, 0, 0.35);
 }
 
 /* Specific styling for Sensors (Blue) */
 .canvas-node.sensor-node {
-    border: 3px solid var(--outline-sensor-service-in-zone);
-    box-shadow: 0 0 10px var(--outline-shadow-sensor-service-in-zone);
+    border: 1px solid rgba(68, 170, 255, 0.5);
+
+    box-shadow:
+        0 0 0 1px rgba(68, 170, 255, 0.2),
+        0 0 25px rgba(68, 170, 255, 0.15),
+        0 10px 30px rgba(0, 0, 0, 0.35);
+}
+
+.canvas-node:hover {
+    transform: translateY(-4px);
+
+    box-shadow:
+        0 18px 40px rgba(0, 0, 0, 0.45);
+
+    border-color:
+        rgba(255, 255, 255, 0.15);
+}
+
+.canvas-node:active {
+    cursor: grabbing;
+
+    transform: scale(1.02);
+
+    box-shadow:
+        0 24px 50px rgba(0, 0, 0, 0.5);
 }
 
 /* The Delete Button styling */
@@ -85,11 +218,11 @@
 
 .canvas-node:active {
     cursor: grabbing;
-    box-shadow: 10px 10px 25px rgba(0,0,0,0.7);
+    box-shadow: 10px 10px 25px rgba(0, 0, 0, 0.7);
 }
 
 /*connect button styling*/
-.connect-btn{
+.connect-btn {
     background: var(--accent-color);
     color: var(--text-main);
     border: none;
@@ -118,11 +251,22 @@
 /* Container for Submit and Clear */
 #relationships-buttons {
     display: flex;
-    gap: 12px;
-    justify-content: flex-end;
-    padding: 15px;
-    background: var(--relationship-editor-background);
-    border-bottom: 1px solid var(--relationship-editor-border);
+
+    align-items: center;
+
+    gap: 16px;
+
+    padding: 20px 24px;
+
+    border-radius: 18px;
+
+    background:
+        rgba(255, 255, 255, 0.04);
+
+    border:
+        1px solid rgba(255, 255, 255, 0.08);
+
+    backdrop-filter: blur(12px);
 }
 
 /* Base button styling */
@@ -140,14 +284,37 @@
 
 /* Submit Button - The Primary Action */
 #submit-relationships-button {
-    background: var(--accent-color);
-    color: var(--accent-text);
-    box-shadow: 0 2px 8px var(--outline-shadow-sensor-service-in-zone);
+    height: 48px;
+
+    padding: 0 24px;
+
+    border: none;
+
+    border-radius: 14px;
+
+    background:
+        linear-gradient(135deg,
+            #ffd84d,
+            #ffea70);
+
+    color: #111;
+
+    font-weight: 700;
+
+    letter-spacing: 0.4px;
+
+    cursor: pointer;
+
+    transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease;
 }
 
 #submit-relationships-button:hover {
-    filter: brightness(1.1);
-    transform: translateY(-1px);
+    transform: translateY(-2px);
+
+    box-shadow:
+        0 10px 25px rgba(255, 216, 77, 0.3);
 }
 
 /* Clear Button - The Secondary/Danger Action */
@@ -165,4 +332,87 @@
 
 #relationships-buttons input[type="button"]:active {
     transform: scale(0.96);
+}
+
+#app_name {
+    flex: 1;
+
+    height: 48px;
+
+    border-radius: 14px;
+
+    border:
+        1px solid rgba(255, 255, 255, 0.08);
+
+    background:
+        rgba(255, 255, 255, 0.04);
+
+    padding: 0 18px;
+
+    color: white;
+
+    font-size: 0.95rem;
+
+    outline: none;
+
+    transition:
+        border-color 0.2s ease,
+        background 0.2s ease;
+}
+
+#app_name:focus {
+    border-color:
+        rgba(255, 216, 77, 0.5);
+
+    background:
+        rgba(255, 255, 255, 0.06);
+}
+
+.canvas-empty-state {
+    position: absolute;
+
+    top: 50%;
+    left: 50%;
+
+    transform: translate(-50%, -50%);
+
+    color: #666;
+
+    font-size: 1rem;
+
+    letter-spacing: 0.5px;
+
+    pointer-events: none;
+}
+
+#saved-apps-container {
+    display: grid;
+
+    grid-template-columns:
+        repeat(auto-fill, minmax(260px, 1fr));
+
+    gap: 18px;
+}
+
+.saved-app-card {
+    padding: 18px;
+
+    border-radius: 18px;
+
+    background:
+        rgba(255, 255, 255, 0.04);
+
+    border:
+        1px solid rgba(255, 255, 255, 0.08);
+
+    transition:
+        transform 0.2s ease,
+        border-color 0.2s ease;
+}
+
+.saved-app-card:hover {
+    transform: translateY(-4px);
+
+    border-color:
+        rgba(255, 216, 77, 0.3);
 }

@@ -1,125 +1,197 @@
 <!DOCTYPE html>
-<html>
-    <head>
-        <link rel="stylesheet" href="styles/colors.css">
-        <link rel="stylesheet" href="styles/main.css">
-        <link rel="stylesheet" href="styles/tabs_style.css">
-        <link rel="stylesheet" href="styles/list_display_style.css">
-        <link rel="stylesheet" href="styles/app_editor.css">
-        <link rel="stylesheet" href="styles/connection_modal.css">
-    </head>
-    <body>
+<html lang="en">
 
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Atlas Dashboard</title>
+
+    <link rel="stylesheet" href="styles/colors.css">
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="styles/tabs_style.css">
+    <link rel="stylesheet" href="styles/list_display_style.css">
+    <link rel="stylesheet" href="styles/app_editor.css">
+    <link rel="stylesheet" href="styles/connection_modal.css">
+</head>
+
+<body>
+
+    <div class="app-shell">
+
+        <!-- HEADER -->
+        <header class="app-header">
+            <div>
+                <h1>Atlas Dashboard</h1>
+                <p>IoT Relationship Management Platform</p>
+            </div>
+        </header>
+
+        <!-- TABS -->
         <div class="tabs-container">
-            <input type="radio" name="option" id="things_tab" onclick="loadTab('tabs/things/things.html')" checked/>
-            <label for="things_tab">
-                <div class="tab-name"> Things </div>
-            </label>
-            <input type="radio" name="option" id="services_tab"  onclick="loadTab('tabs/services/services.html')" />
-            <label for="services_tab">
-                <div class="tab-name"> Services </div>
-            </label>
-            <input type="radio" name="option" id="relationships_tab" onclick="loadTab('tabs/relationships/relationships.html')"/>
-            <label for="relationships_tab">
-                <div class="tab-name"> Relationships </div>
-            </label>
-            <input type="radio" name="option" id="apps_tab" onclick="loadTab('tabs/apps/apps.html')"/>
-            <label for="apps_tab">
-                <div class="tab-name"> Apps </div>
-            </label>
 
+            <div class="tabs-bar">
+
+                <input type="radio" name="option" id="things_tab" checked />
+
+                <label for="things_tab">
+                    <div class="tab-name">Things</div>
+                </label>
+
+
+                <input type="radio" name="option" id="services_tab" />
+
+                <label for="services_tab">
+                    <div class="tab-name">Services</div>
+                </label>
+
+
+                <input type="radio" name="option" id="relationships_tab" />
+
+                <label for="relationships_tab">
+                    <div class="tab-name">Relationships</div>
+                </label>
+
+
+                <input type="radio" name="option" id="apps_tab" />
+
+                <label for="apps_tab">
+                    <div class="tab-name">Apps</div>
+                </label>
+
+            </div>
+
+            <!-- CONTENT -->
             <div id="main-content-area" class="tab-content"></div>
+
         </div>
-        <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
-        <script src="scripts/display.js"></script>
-        <script type="module" src="connection/app.js"></script>
 
-        <script src="tabs/things/things.js"></script>
+    </div>
 
-        <script src="tabs/services/services.js"></script>
+    <!-- SOCKET -->
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
 
-        <script src="tabs/relationships/relationships.js"></script>
+    <!-- GLOBAL -->
+    <script src="scripts/display.js"></script>
+    <script type="module" src="connection/app.js"></script>
 
-        <script src="tabs/apps/app_manager.js"></script>
-        <script src="tabs/apps/app_editor.js"></script>
-        <script src="tabs/apps/display_apps.js"></script>
-        
-        <script>
-            const tabMap = {
-                "tabs/things/things.html": {
-                    init: initThingsTab,
-                    cleanup: cleanupThingsTab
-                },
-                "tabs/services/services.html": {
-                    init: initServicesTab,
-                    cleanup: cleanupServicesTab
-                },
-                "tabs/relationships/relationships.html": {
-                    init: initRelationshipsTab,
-                    cleanup: cleanupRelationshipsTab
-                },
-                "tabs/apps/apps.html": {
-                    init: initAppsTab,
-                    cleanup: cleanupAppsTab
-                }
-            };
+    <!-- TABS -->
+    <script src="tabs/things/things.js"></script>
+    <script src="tabs/services/services.js"></script>
+    <script src="tabs/relationships/relationships.js"></script>
 
-            let currentCleanup = null;
+    <script src="tabs/apps/app_manager.js"></script>
+    <script src="tabs/apps/app_editor.js"></script>
+    <script src="tabs/apps/display_apps.js"></script>
 
-            function loadTab(file) {
-                const container = document.getElementById('main-content-area');
+    <script>
 
-                // cleanup previous tab
-                if (currentCleanup) {
-                    currentCleanup();
-                    currentCleanup = null;
-                }
+        const tabMap = {
 
-                fetch(file)
-                    .then(r => r.text())
-                    .then(data => {
-                        container.innerHTML = data;
+            "things_tab": {
+                file: "tabs/things/things.html",
+                init: initThingsTab,
+                cleanup: cleanupThingsTab
+            },
 
-                        if (tabMap[file]) {
-                            tabMap[file].init();
-                            currentCleanup = tabMap[file].cleanup;
-                        }
-                    })
-                    .catch(err => {
-                        container.innerHTML = `<p style="color:red">${err.message}</p>`;
-                    });
-            };
+            "services_tab": {
+                file: "tabs/services/services.html",
+                init: initServicesTab,
+                cleanup: cleanupServicesTab
+            },
 
-            function handleConnect(){
-                const ip = document.getElementById('ip_input').value;
-                const port = document.getElementById('port_input').value;
+            "relationships_tab": {
+                file: "tabs/relationships/relationships.html",
+                init: initRelationshipsTab,
+                cleanup: cleanupRelationshipsTab
+            },
 
-                if(!ip || !port){
-                    alert("Please enter both IP and a Port");
-                    return;
-                }
-
-                console.log(`Searching for Atlas on ${ip}:${port}...`);
-                find_atlas(ip, port); //it is a function from the discovery script
-
+            "apps_tab": {
+                file: "tabs/apps/apps.html",
+                init: initAppsTab,
+                cleanup: cleanupAppsTab
             }
-            // initial load
-            window.onload = () => {
-                console.log("we reached the load Tab");
-                loadTab('tabs/things/things.html');
+        };
+
+        let currentCleanup = null;
+
+        async function loadTab(tabId) {
+
+            const tabData = tabMap[tabId];
+
+            if (!tabData) return;
+
+            const container =
+                document.getElementById("main-content-area");
+
+            // CLEANUP PREVIOUS TAB
+            if (currentCleanup) {
+                currentCleanup();
+                currentCleanup = null;
             }
 
-            window.onServiceDragStart = (e) => {
-                // Get the base64 string from the attribute
-                const payload = e.currentTarget.getAttribute('data-service');
-                // Use 'text/plain' for maximum browser compatibility
-                e.dataTransfer.setData("text/plain", payload);
-                e.dataTransfer.effectAllowed = "copy";
-            };
+            try {
 
+                const response =
+                    await fetch(tabData.file);
 
+                const html =
+                    await response.text();
 
-        </script>
-    
-    </body>
+                container.innerHTML = html;
+
+                if (tabData.init) {
+                    tabData.init();
+                }
+
+                currentCleanup = tabData.cleanup;
+
+            }
+            catch (err) {
+
+                container.innerHTML = `
+                    <p style="color:red">
+                        ${err.message}
+                    </p>
+                `;
+            }
+        }
+
+        // TAB EVENT LISTENERS
+        document
+            .querySelectorAll('input[name="option"]')
+            .forEach(tab => {
+
+                tab.addEventListener("change", (e) => {
+
+                    loadTab(e.target.id);
+
+                });
+            });
+
+        // INITIAL LOAD
+        window.onload = () => {
+
+            loadTab("things_tab");
+
+        };
+
+        // GLOBAL DRAG START
+        window.onServiceDragStart = (e) => {
+
+            const payload =
+                e.currentTarget.getAttribute('data-service');
+
+            e.dataTransfer.setData(
+                "text/plain",
+                payload
+            );
+
+            e.dataTransfer.effectAllowed = "copy";
+        };
+
+    </script>
+
+</body>
+
 </html>

@@ -1,81 +1,107 @@
-
-/*TABS STYLE*/
-
 .tabs-container {
-    width: 90%;
-    max-width: 1000px;
-    height: 300px;
+
+    width: 100%;
+
     display: flex;
-    justify-content: center;
-    align-items: flex-start;
-    position: relative; /*it allows us to show the tab content as we do!*/
-    margin-top: 20px; /*so it goes always up*/
+    flex-direction: column;
+
+    gap: 20px;
 }
 
-input[type="radio"]{
+.tabs-bar {
+
+    display: flex;
+
+    gap: 16px;
+}
+
+input[type="radio"] {
     display: none;
 }
 
 label {
+
     flex: 1;
+    min-width: 120px;
 }
 
 .tab-name {
-    color: var(--text-main);
-    font-family: var(--font-family);
-    height: 60px;
-    background: var(--tab-bg-inactive);
-    backdrop-filter: blur(5px);
-    display: flex; 
-    justify-content: center;
+
+    height: 58px;
+
+    display: flex;
+
     align-items: center;
+    justify-content: center;
+
+    background:
+        rgba(255, 255, 255, 0.05);
+
+    border:
+        1px solid rgba(255, 255, 255, 0.08);
+
+    border-radius: 16px;
+
+    color: #aaa;
+
+    font-weight: 600;
+
+    letter-spacing: 0.3px;
+
     cursor: pointer;
-    transition: all 0.3s ease;
-    border-bottom: 2px solid var(--border-color);
+
+    backdrop-filter: blur(12px);
+
+    transition:
+        transform 0.2s ease,
+        background 0.2s ease,
+        border-color 0.2s ease;
 }
 
 .tab-name:hover {
-    background: var(--tab-bg-hover);
+
+    transform: translateY(-2px);
+
+    background:
+        rgba(255, 255, 255, 0.08);
+
+    border-color:
+        rgba(255, 255, 255, 0.16);
 }
 
-input:checked + label .tab-name {
-    background: var(--accent-color);
-    color: var(--accent-text);
-    font-size: 1.1rem;
-    font-weight: 800;
-    border-top-left-radius: 8px;
-    border-top-right-radius: 8px;
-    border-bottom: 2px solid var(--accent-color);
-}
+input:checked+label .tab-name {
 
-/*TAB CONTENT = AS IN PAGES */
+    background:
+        linear-gradient(135deg,
+            #ffd84d,
+            #ffea70);
+
+    color: #111;
+
+    border-color: transparent;
+
+    box-shadow:
+        0 10px 30px rgba(255, 216, 77, 0.3);
+}
 
 .tab-content {
-    display: block; /* Always visible because JS changes the text inside */
-    position: absolute;
-    top: 60px;      /* Matches the height of your .tab-name */
-    left: 0;
+
     width: 100%;
-    min-height: 400px; /* Use min-height so it grows if there is more text */
 
-    background: var(--tab-bg-inactive);
-    backdrop-filter: blur(10px);
-    color: var(--text-main);
-    font-family: var(--font-family);
-    padding: 30px;
-    box-sizing: border-box;
+    min-height: 700px;
 
-    border-bottom-left-radius: 15px;
-    border-bottom-right-radius: 15px;
-    border: 1px solid var(--border-color);
-    border-top: 5px solid var(--accent-color); /* Keeps the yellow line visible */
-}
+    padding: 32px;
 
-/* DELETE these lines - they are from the old "no-javascript" version */
-/* input:checked + label .tab-content { display: block; } */
+    border-radius: 28px;
 
+    background:
+        rgba(255, 255, 255, 0.04);
 
-input:checked + label .tab-content {
-    border-top: 5px solid var(--accent-color);
-    background: --tab-content-background; 
+    border:
+        1px solid rgba(255, 255, 255, 0.08);
+
+    backdrop-filter: blur(18px);
+
+    box-shadow:
+        0 20px 50px rgba(0, 0, 0, 0.35);
 }
