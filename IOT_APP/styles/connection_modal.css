@@ -1,6 +1,6 @@
-/* =====================================================
-MODAL OVERHAUL STYLES - GOLD/YELLOW EDITION
-====================================================== */
+/* ==========================================================================
+   connection_modal.css
+   ========================================================================== */
 
 .modal-overlay {
     position: fixed;
@@ -19,15 +19,14 @@ MODAL OVERHAUL STYLES - GOLD/YELLOW EDITION
 }
 
 .connection-modal {
-    background: #222222;
+    background: var(--connection-modal-background);
     padding: 24px;
-    border-radius: 10px;
-    /* Brought back your prominent yellow/gold border outline */
-    border: 2px solid var(--accent-color, #f1c40f); 
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
-    color: #ffffff;
+    border-radius: 16px;
+    border: 2px solid var(--accent-color);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+    color: var(--text-main);
     width: 360px;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: inherit;
     transform: translateY(-15px);
     animation: slideUp 0.2s ease forwards;
 }
@@ -40,21 +39,19 @@ MODAL OVERHAUL STYLES - GOLD/YELLOW EDITION
     letter-spacing: 0.5px;
 }
 
-/* Horizontal alignment grid for main action paths */
 .modal-options-row {
     display: flex;
     gap: 12px;
     margin-bottom: 16px;
 }
 
-/* Base style matching your yellow theme preference */
 .modal-btn {
     flex: 1;
     padding: 10px 14px;
-    border: 1px solid #444;
-    border-radius: 6px;
-    background: #2d2d2d;
-    color: #e0e0e0;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--surface-2);
+    color: var(--text-main);
     font-size: 0.9rem;
     font-weight: 500;
     cursor: pointer;
@@ -63,13 +60,11 @@ MODAL OVERHAUL STYLES - GOLD/YELLOW EDITION
 }
 
 .modal-btn:hover {
-    background: #3d3d3d;
-    border-color: var(--accent-color, #f1c40f);
-    color: #fff;
+    background: var(--surface-3);
+    border-color: var(--accent-color);
     transform: translateY(-1px);
 }
 
-/* Inline Container for Condition Input */
 .condition-input-wrapper {
     display: flex;
     gap: 8px;
@@ -77,14 +72,13 @@ MODAL OVERHAUL STYLES - GOLD/YELLOW EDITION
     padding-top: 4px;
 }
 
-/* Style for the embedded text input field */
 .modal-input {
     flex: 1;
     padding: 10px 12px;
-    background: #1a1a1a;
-    border: 1px solid #444;
+    background: var(--surface-1);
+    border: 1px solid var(--border-color);
     border-radius: 6px;
-    color: #fff;
+    color: var(--text-main);
     font-size: 0.9rem;
     font-family: monospace;
     transition: border-color 0.2s;
@@ -92,35 +86,31 @@ MODAL OVERHAUL STYLES - GOLD/YELLOW EDITION
 
 .modal-input:focus {
     outline: none;
-    border-color: var(--accent-color, #f1c40f);
+    border-color: var(--accent-color);
 }
 
-/* Specific Style for the 'Set Condition' action item */
 .modal-btn.action-set-condition {
     flex: 0 0 auto;
-    background: var(--accent-color, #f1c40f);
-    color: #111;
+    background: var(--accent-color);
+    color: var(--accent-text);
     border: none;
     font-weight: 600;
 }
 
 .modal-btn.action-set-condition:hover {
-    background: #f39c12;
-    color: #000;
+    background: #818cf8;
 }
 
-/* Visual Separator Line */
 .modal-divider {
     border: none;
-    border-top: 1px solid #3a3a3a;
+    border-top: 1px solid var(--border-color);
     margin-bottom: 16px;
 }
 
-/* Cancel Button Styles */
 .modal-btn-cancel {
     background: transparent;
     border: none;
-    color: #aaaaaa;
+    color: rgba(241, 245, 249, 0.5);
     font-size: 0.9rem;
     cursor: pointer;
     transition: color 0.15s ease;
@@ -130,9 +120,17 @@ MODAL OVERHAUL STYLES - GOLD/YELLOW EDITION
 }
 
 .modal-btn-cancel:hover {
-    color: #ff6b6b;
+    color: var(--offline-status-color);
 }
 
-/* Core Animations */
-@keyframes fadeIn { to { opacity: 1; } }
-@keyframes slideUp { to { transform: translateY(0); } }
+@keyframes fadeIn {
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideUp {
+    to {
+        transform: translateY(0);
+    }
+}
