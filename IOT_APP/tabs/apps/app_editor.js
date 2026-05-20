@@ -524,9 +524,119 @@ function clear_canvas() {
 }
 
 /* =====================================================
-GLOBAL EXPORT
+SHOW APP
+===================================================== */
+function show_application(app) {
+    if (!app) {
+        console.error("[Canvas Engine] Cannot open app: payload context is empty.");
+        return;
+    }
+
+    console.log(`[Canvas Engine] Rendering app topology for: "${app.name}"`);
+
+    // 1. CLEAR WORKSPACE CANVAS CLEANLY
+    const zone = document.getElementById('drop-editor-zone');
+    if (zone) {
+        zone.querySelectorAll('.canvas-node').forEach(node => node.remove());
+    }
+    relationshipState.connections = [];
+    relationshipState.spawnCounter = 0;
+
+    // 2. SYNCHRONIZE HEAD TITLE FIELD TEXT INPUT
+    const nameInput = document.getElementById("app_name");
+    if (nameInput) {
+        nameInput.value = app.name;
+    }
+
+    // This tracking dictionary maps a service name string to its actual DOM Node reference
+    const createdNodesMap = {};
+    
+    // Grid configuration geometry to spread elements logically across the editor zone canvas
+    const originX = 120;
+    const originY = 120;
+    const columnSpacing = 240;
+    const rowSpacing = 160;
+    const maxColumns = 3;
+    let gridIndex = 0;
+
+    // 3. EXTRACT AND COLLECT DISTINCT SERVICE DEFINITIONS
+    const uniqueServices = new Map();
+
+    // Collect from the services array backup block first
+    if (app.services && Array.isArray(app.services)) {
+        app.services.forEach(service => {
+            const sName = service.service_name || service.name;
+            if (sName && !uniqueServices.has(sName)) {
+                uniqueServices.set(sName, service);
+            }
+        });
+    }
+
+    // Cross-verify with relationship structures to ensure zero orphans are missed
+    if (app.relationships && Array.isArray(app.relationships)) {
+        app.relationships.forEach(rel => {
+            if (!uniqueServices.has(rel.nameA)) {
+                uniqueServices.set(rel.nameA, { service_name: rel.nameA, type: rel.typeA });
+            }
+            if (!uniqueServices.has(rel.nameB)) {
+                uniqueServices.set(rel.nameB, { service_name: rel.nameB, type: rel.typeB });
+            }
+        });
+    }
+
+    // 4. GENERATE AND ATTACH VISUAL HTML CARD NODES
+    uniqueServices.forEach((serviceInfo) => {
+        // Compute position index coordinates dynamically
+        const posX = originX + (gridIndex % maxColumns) * columnSpacing;
+        const posY = originY + Math.floor(gridIndex / maxColumns) * rowSpacing;
+
+        // Build the physical DOM structural node object using your asset generation suite
+        const node = buildCanvasNode(serviceInfo, posX, posY);
+        
+        // Wire back interactive listener capabilities exactly like live drops
+        setupDeleteButton(node);
+        setupConnectionButton(node);
+        enableNodeDragging(node);
+
+        if (zone && node) {
+            zone.appendChild(node);
+            
+            // Critical Step: Store reference handle linked by service name identifier text
+            createdNodesMap[serviceInfo.service_name] = node;
+        }
+        gridIndex++;
+    });
+
+    // 5. RESTORE INTER-NODE RELATIONSHIP PATH LINKS
+    if (app.relationships && Array.isArray(app.relationships)) {
+        app.relationships.forEach(rel => {
+            const sourceNode = createdNodesMap[rel.nameA];
+            const targetNode = createdNodesMap[rel.nameB];
+
+            if (sourceNode && targetNode) {
+                // Register tracking record to core layout pipeline engine
+                relationshipState.connections.push({
+                    from: sourceNode,
+                    to: targetNode,
+                    type: rel.type,
+                    condition: rel.condition
+                });
+            } else {
+                console.warn(`[Canvas Engine] Missing connection node anchors. A: ${!!sourceNode}, B: ${!!targetNode}`);
+            }
+        });
+    }
+
+    // 6. RENDER CONNECTION SPLINES ON SVG LAYER
+    drawConnections();
+    console.log(`[Canvas Engine] Render complete. Loaded ${gridIndex} nodes and ${relationshipState.connections.length} connections.`);
+}
+
+/* =====================================================
+GLOBAL EXPORT (Make sure show_application is here!)
 ===================================================== */
 window.renderDraggableServicesList = renderDraggableServicesList;
 window.initDropZone = initDropZone;
 window.onServiceDragStart = onServiceDragStart;
 window.clearConnectionPaths = clearConnectionPaths;
+window.show_application = show_application; // <-- THIS EXPORTS IT GLOBALLY

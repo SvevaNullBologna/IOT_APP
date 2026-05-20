@@ -76,39 +76,77 @@ function delete_app(appName) {
 SAVE TRANSACTION METHOD
 ===========================================
 */
-function save_app(relationships, services) {
+function save_app() {
     const app_name_element = document.getElementById('app_name');
-    if (!app_name_element) {
-        return;
-    }
+    if (!app_name_element) return;
 
-    // Extracting character string value safely
     const app_name = app_name_element.value.trim();
     if (!isValidAppName(app_name)) {
         alert("app name not valid");
         return;
     }
 
-    const saved_apps = get_saved_apps();
+    let saved_apps = get_saved_apps();
+    const existingIndex = saved_apps.findIndex(app => app.name === app_name);
 
-    if (saved_apps.some(app => app.name === app_name)) {
-        alert("app name already in use");
-        return;
+    if (existingIndex !== -1) {
+        if (!confirm(`An application named "${app_name}" already exists. Do you want to overwrite it?`)) {
+            console.log(`[Engine] Overwrite cancelled by user.`);
+            return; 
+        }
     }
 
-    // Write app JSON descriptor format schema maps
+    // --- FIX: Extract live relationships and services directly from the active canvas state ---
+    const generatedRelationships = [];
+    const uniqueServicesMap = new Map();
+
+    // 1. Check if the editor state exists
+    if (typeof relationshipState !== 'undefined' && Array.isArray(relationshipState.connections)) {
+        relationshipState.connections.forEach(conn => {
+            if (typeof make_relationship === 'function') {
+                const cleanRel = make_relationship(conn.type, conn.from, conn.to, conn.condition);
+                if (cleanRel) {
+                    generatedRelationships.push(cleanRel);
+                }
+            }
+        });
+    }
+
+    // 2. Scan all nodes currently sitting inside the drop zone to save the service list
+    const dropZone = document.getElementById('drop-editor-zone');
+    if (dropZone) {
+        dropZone.querySelectorAll('.canvas-node').forEach(node => {
+            try {
+                const payload = node.getAttribute('data-service');
+                if (payload) {
+                    const serviceObj = JSON.parse(decodeURIComponent(atob(payload)));
+                    if (serviceObj && serviceObj.service_name) {
+                        uniqueServicesMap.set(serviceObj.service_name, serviceObj);
+                    }
+                }
+            } catch (e) {
+                console.error("Error collecting canvas node data for saving:", e);
+            }
+        });
+    }
+
     const new_app = {
         name: app_name,
-        relationships: relationships || [],
-        services: services || []
+        relationships: generatedRelationships,
+        services: Array.from(uniqueServicesMap.values())
     };
 
-    saved_apps.push(new_app);
-    localStorage.setItem(app_folder, JSON.stringify(saved_apps));
+    if (existingIndex !== -1) {
+        saved_apps[existingIndex] = new_app;
+        console.log(`[Engine] Application "${app_name}" updated successfully.`);
+    } else {
+        saved_apps.push(new_app);
+        console.log(`[Engine] Application "${app_name}" saved successfully.`);
+    }
 
+    localStorage.setItem(app_folder, JSON.stringify(saved_apps));
     alert(`App "${app_name}" saved successfully!`);
 
-    // Signal view layer update to include newly minted card layout maps
     if (typeof renderAppsList === 'function') {
         renderAppsList();
     }
