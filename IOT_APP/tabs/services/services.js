@@ -1,5 +1,10 @@
 let services = [];
 
+services.push(
+    {service_name: "nome1", service_id: "ID1", API: "[str]=>[NULL]", thing_id: "MSS", type: "Action", status: "Active"},
+    {service_name: "nome2", service_id: "ID2", API: "[NULL]=>[str]", thing_id: "MSS", type: "Report", status: "Active"}
+);
+
 window.all_services_status = all_services_status;
 window.readServiceMessage = readServiceMessage;
 

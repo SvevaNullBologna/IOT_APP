@@ -1,10 +1,8 @@
 /*
 ====================================
-CURRENT APP
+CURRENT APP STATE
 ====================================
 */
-
-const apps = [];
 
 let currentApp = {
     name: "",
@@ -13,9 +11,6 @@ let currentApp = {
     steps: []
 };
 
-
-apps.push({name:"applicazion1"});
-
 /*
 ====================================
 INIT TAB
@@ -23,7 +18,6 @@ INIT TAB
 */
 
 function initAppsTab() {
-
     console.log("Apps initialized");
 
     // 1. Mostra la lista dei sensori e attuatori sulla sinistra
@@ -42,7 +36,6 @@ function initAppsTab() {
     }
 }
 
-
 /*
 ====================================
 CLEANUP
@@ -58,56 +51,42 @@ function cleanupAppsTab() {
 
 /*
 ====================================
-
-SHOW APP 
-
+SHOW APP & DYNAMIC CARD RENDERING
 ====================================
 */
 
-function getAppCard(app){
+function getAppCard(app) {
+    // Safely verify if this app is currently executing via our runtime engine in app.js
+    const isRunning = typeof isAppRunning === 'function' && isAppRunning(app.name);
+    
+    // Configure state appearance parameters
+    const btnText = isRunning ? "Stop ⏸" : "Run ▶";
+    const btnClass = isRunning ? "app-toggle-btn running" : "app-toggle-btn stopped";
+    const btnAction = isRunning ? `toggle_app_state('${app.name}', false)` : `toggle_app_state('${app.name}', true)`;
+
     return `
         <div class="iot-card thing-variant">
             <div class="card-header">
                 <h4 class="thing-title">${app.name}</h4>
             </div>
             <div class="card-body">
-                <button class="activate_app_button" title="runs selected app" on_click="run_app"> |> </button>
-                <button class="stop_app_button" title="stops selected app" on_click="stop_app"> || </button>
-                <button class="delete_app_button" title="deletes selected app" on_click="delete_app"> X </button>
+                <!-- SINGLE DYNAMIC ACTION/FEEDBACK BUTTON -->
+                <button class="${btnClass}" onclick="${btnAction}">${btnText}</button>
+                <button class="delete_app_button" title="deletes selected app" onclick="delete_app('${app.name}')"> X </button>
             </div>
         </div>
     `;
 }
 
-
-function renderAppsList(){
-    // Usiamo il selettore nativo per evitare conflitti con la macro $
+function renderAppsList() {
     const savedAppsContainer = document.getElementById('saved-apps-container');
 
     if (savedAppsContainer) {
-        savedAppsContainer.innerHTML = apps.map(getAppCard).join('');
+        // Read directly from the common local storage shared engine
+        const savedAppList = typeof get_saved_apps === 'function' ? get_saved_apps() : [];
+        savedAppsContainer.innerHTML = savedAppList.map(getAppCard).join('');
     }
 }
-
-/*
-===========================================
-APP MANAGER FUNCTIONS
-===========================================
-*/
-
-
-function run_app(){
-
-}
-
-function stop_app(){
-
-}
-
-function delete_app(){
-
-}
-
 
 /* 
 ==========================================
@@ -115,13 +94,6 @@ GLOBAL EXPORT
 ===========================================
 */
 
-
-window.initAppsTab =
-    initAppsTab;
-
-window.cleanupAppsTab =
-    cleanupAppsTab;
-
-
-
-
+window.initAppsTab = initAppsTab;
+window.cleanupAppsTab = cleanupAppsTab;
+window.renderAppsList = renderAppsList;

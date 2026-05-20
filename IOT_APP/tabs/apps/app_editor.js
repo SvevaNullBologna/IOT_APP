@@ -2,14 +2,11 @@
 STATE & CONFIGURATION
 ===================================================== */
 
-const app_folder = "/data";
-
 const SERVICE_TYPES = {
     SENSOR: 'Sensor',
     ACTUATOR: 'Actuator'
 };
 
-// Evita il crash se la costante CONNECTION_TYPES è già dichiarata altrove
 if (typeof CONNECTION_TYPES === 'undefined') {
     window.CONNECTION_TYPES = {
         ORDER: 'order',
@@ -28,7 +25,6 @@ const relationshipState = {
 /* =====================================================
 DOM HELPERS (PROTETTO DA CONFLITTI)
 ===================================================== */
-// Se $ non esiste la definiamo, altrimenti usiamo quella già presente senza mandare in crash lo script
 if (typeof $ === 'undefined') {
     window.$ = (id) => document.getElementById(id);
 }
@@ -109,7 +105,6 @@ function renderDraggableServicesList() {
     const container = document.getElementById('things-editor-zone');
     if (!container) return;
 
-    // Fallback di sicurezza se la variabile globale dei servizi non è ancora definita
     const availableServices = typeof services !== 'undefined' ? services : [];
 
     const onlineServices = availableServices.filter(service => 
@@ -474,6 +469,7 @@ function getNodeCenter(node, zoneRect) {
 CANVAS ACTIONS (SAVE / CLEAR)
 ===================================================== */
 
+
 function submit_relationships() {
     if (relationshipState.connections.length === 0) {
         console.warn("No new connections to submit.");
@@ -497,6 +493,8 @@ function submit_relationships() {
     } else {
         console.error("Global 'relationships' array not found.");
     }
+
+    execute_canvas_reset();
 
     const zone = document.getElementById('drop-editor-zone');
     if (zone) {
@@ -525,33 +523,8 @@ function clear_canvas() {
     }
 }
 
-
-
-/* SAVE APP PART*/
-
-function isValidAppName(name) {
-    return /^[a-zA-Z0-9_-]{1,20}$/.test(name);
-}
-
-function save_app(){
-    const app_name = document.getElementById('app_name');
-    if(!app_name || !isValidAppName(app_name)){
-        alert("app name not valid");
-        return;
-    }
-
-    //if()
-    //saves in xml
-    //name 
-    //relationships 
-    //services in the relationships
-
-
-    //adds on the SAVED APP list
-}
-
 /* =====================================================
-ESPORTAZIONE FUNZIONI UTILI PER L'ORCHESTRATORE (app.js)
+GLOBAL EXPORT
 ===================================================== */
 window.renderDraggableServicesList = renderDraggableServicesList;
 window.initDropZone = initDropZone;
