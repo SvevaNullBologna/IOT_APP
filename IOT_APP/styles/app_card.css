@@ -1,0 +1,95 @@
+/* Base settings to square up and align button wrappers */
+.card-actions-wrapper {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.icon-btn {
+    width: 28px;
+    height: 28px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: 1px solid transparent; 
+    border-radius: 4px;
+    cursor: pointer;
+    padding: 0;
+    transition: background 0.2s, color 0.2s, transform 0.1s;
+}
+
+/* Subtle background elevation on hover */
+.icon-btn:hover {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+.icon-btn:active {
+    transform: scale(0.95);
+}
+
+/* Master definitions for structural alignment */
+.icon-play, .icon-pause, .icon-delete {
+    position: relative;
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    box-sizing: border-box;
+}
+
+/* ===========================================
+COLOR INTEGRATION & GEOMETRY WIRING
+===========================================
+*/
+
+/* 1. RUN / PLAY BUTTON */
+.run_app_button {
+    color: var(--accent-color, #007bff);
+}
+.icon-play {
+    width: 10px;
+    height: 10px;
+    margin-left: -2px; /* Centers the visual mass of the triangle arrow pointing right */
+    border-style: solid;
+    border-width: 2.5px 2.5px 0 0; /* Identical line weight */
+    border-color: currentColor currentColor transparent transparent;
+    transform: rotate(45deg);
+}
+
+/* 2. PAUSE BUTTON */
+.pause_app_button {
+    color: var(--accent-color, #007bff);
+}
+.icon-pause::before,
+.icon-pause::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    width: 2.5px; 
+    height: 14px;
+    background-color: currentColor;
+    border-radius: 1px;
+}
+.icon-pause::before { left: 3px; }
+.icon-pause::after  { right: 3px; }
+
+/* 3. DELETE BUTTON */
+.delete_app_button {
+    color: #ff6b6b; /* Muted modern red to contrast with system action colors */
+}
+.delete_app_button:hover {
+    background: rgba(255, 107, 107, 0.1);
+}
+.icon-delete::before,
+.icon-delete::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 6px;
+    width: 2.5px; 
+    height: 14px;
+    background-color: currentColor;
+    border-radius: 1px;
+}
+.icon-delete::before { transform: rotate(45deg); }
+.icon-delete::after  { transform: rotate(-45deg); }

@@ -20,23 +20,27 @@ SHOW APP & DYNAMIC CARD RENDERING
 */
 
 function getAppCard(app) {
-
     const appPayload = btoa(encodeURIComponent(JSON.stringify(app)));
 
     return `
         <div class="iot-card thing-variant saved-app-card"
-            ondblclick = "window.handleAppDoubleClick('${appPayload}', event)"
+            ondblclick="window.handleAppDoubleClick('${appPayload}', event)"
             style="cursor: pointer; user-select: none;"
             title="Double click to open in drop zone">
             <div class="card-header">
                 <h4 class="thing-title device-name">${app.name}</h4>
             </div>
             <div class="card-body card-actions-wrapper">
-                <!-- SINGLE DYNAMIC ACTION/FEEDBACK BUTTON -->
-                <button class="run_app_button" title="runs selected app" onclick="run_app('${app.name}')" > |> </button>
-                <button class="pause_app_button" title="pauses selected app" onclick="pause_app('${app.name}')" > || </button>
-                <button class="delete_app_button" title="deletes selected app" onclick="delete_app('${app.name}')">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                <button class="run_app_button icon-btn" title="runs selected app" onclick="run_app('${app.name}')">
+                    <i class="icon-play"></i>
+                </button>
+                
+                <button class="pause_app_button icon-btn" title="pauses selected app" onclick="pause_app('${app.name}')"> 
+                    <i class="icon-pause"></i>
+                </button>
+                
+                <button class="delete_app_button icon-btn" title="deletes selected app" onclick="delete_app('${app.name}')">
+                    <i class="icon-delete"></i>
                 </button>
             </div>
         </div>
