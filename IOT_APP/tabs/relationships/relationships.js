@@ -13,52 +13,81 @@ const CONNECTION_TYPES = {
 
 
 /* =====================================================
-MOCK DATA FOR TESTING
-====================================================== */
-relationships.push(
-    {
-        id: 1,
-        nameA: "Temperature Sensor",
-        nameB: "Air Conditioner",
-        typeA: "Sensor",
-        typeB: "Actuator",
-        type: "condition",
-        condition: "value > 25"
-    },
-    {
-        id: 2,
-        nameA: "Humidity Sensor",
-        nameB: "Dehumidifier",
-        typeA: "Sensor",
-        typeB: "Actuator",
-        type: "condition",
-        condition: "humidity >= 70%"
-    },
-    {
-        id: 3,
-        nameA: "Motion Detector",
-        nameB: "Living Room Smart Light",
-        typeA: "Sensor",
-        typeB: "Actuator",
-        type: "order",
-        condition: null
-    },
-    {
-        id: 4,
-        nameA: "Main Door Lock",
-        nameB: "Security Camera",
-        typeA: "Sensor",
-        typeB: "Actuator",
-        type: "order",
-        condition: null
-    }
-);
-
-/* =====================================================
 DOM HELPERS
 ===================================================== */
 
 const $ = (id) => document.getElementById(id);
+
+
+
+/* =====================================================
+RELATIONSHIPS READING
+===================================================== */
+
+function readRelationshipMessage(tweet){
+    if(!tweet) return;
+
+    const serviceA = tweet['FS name'];
+    const serviceB = tweet['SS name'];
+    const type = tweet['Type'];
+    const condition = tweet['Description']; // Capital 'D' from Atlas C++ code
+
+    // Fixed Guard: 'condition' shouldn't be mandatory since 'order' types might not have it
+    if(!serviceA || !serviceB || !type){
+        console.log("received an invalid relationship");
+        return;
+    }
+
+    // 1. Declare placeholders first so they can be updated
+    let determinedTypeA = "ServiceTypeA";
+    let determinedTypeB = "ServiceTypeB";
+
+    // 2. Cross-reference with your services array if available
+    if (typeof services !== 'undefined' && Array.isArray(services)) {
+        const foundA = services.find(s => s.name === serviceA);
+        const foundB = services.find(s => s.name === serviceB);
+        
+        if (foundA && foundA.type) determinedTypeA = foundA.type;
+        if (foundB && foundB.type) determinedTypeB = foundB.type;
+    }
+
+    // 3. Normalize the relationship type (Fixed: referencing 'type' safely)
+    const rawType = type.toLowerCase();
+    let resolvedType = CONNECTION_TYPES.CONDITION;
+    if(rawType.includes('order') || rawType === 'sequence' || rawType === 'control'){
+        resolvedType = CONNECTION_TYPES.ORDER;
+    }
+
+    // 4. Calculate final condition (Fixed: using 'condition' variable)
+    const finalCondition = resolvedType === CONNECTION_TYPES.CONDITION ? (condition || "true") : null;
+
+    // 5. Construct the final object mapping (Omitted ID as requested)
+    const rel = {
+        nameA : serviceA, 
+        nameB : serviceB, 
+        typeA : determinedTypeA,
+        typeB : determinedTypeB, 
+        type : resolvedType, 
+        condition : finalCondition // Fixed: Using your smart finalCondition variable
+    };
+
+    // 6. Duplicate checking loop
+    const isDuplicate = relationships.some(existing => 
+        existing.nameA === rel.nameA && 
+        existing.nameB === rel.nameB && 
+        existing.type === rel.type &&
+        existing.condition === rel.condition
+    );
+
+    if(isDuplicate){
+        return;
+    }
+
+    // 7. Update state array and UI containers
+    relationships.push(rel);
+    const sorted = sortRelationships(relationships);
+    renderRelationshipLists(sorted.conditions, sorted.orders);
+}
 
 /* =====================================================
 RELATIONSHIP CORE FUNCTIONS

@@ -16,16 +16,6 @@ function all_services_status(status){
     showServicesLists();
 } 
 
-
-function store_Services(servicesData){
-    localStorage.setItem('services', JSON.stringify(servicesData));
-}
-
-function get_Services(){
-    const data = localStorage.getItem('services'); 
-    return data ? JSON.parse(data) : [];   
-}
-
 function readServiceMessage(tweet){
     const serviceId = tweet['Entity ID'];
     const serviceName = tweet['Name'];
@@ -57,7 +47,6 @@ function readServiceMessage(tweet){
         renderDraggableServicesList();
     }
 
-    store_Services(services);
     showServicesLists();
     
 }

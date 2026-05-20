@@ -61,6 +61,7 @@ function read_atlas_tweet(tweet) {
     const type = tweet['Tweet Type'];
     if(!type){
         console.log(tweet);
+        return;
     }
     else{
         console.log("TYPE:",type);
@@ -77,6 +78,14 @@ function read_atlas_tweet(tweet) {
             window.readThingMessage(tweet);
         } else {
             console.warn("Funzione readThingMessage non ancora caricata.");
+        }
+    }
+    else if (type === 'Relationship'){
+        if(typeof window.readRelationshipMessage === 'function'){
+            window.readRelationshipMessage(tweet);
+        }
+        else{
+            console.warn('Funzione readRelationshipMessage non ancora caricata.');
         }
     }
 }

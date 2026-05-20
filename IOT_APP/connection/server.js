@@ -127,6 +127,42 @@ server.on('listening', () => {
 // IMPORTANT: Bind to the local IP specifically, just like your Python code did
 server.bind(PORT, localIP);
 
+/* =====================================================
+MOCK INJECTION HOOK
+====================================================== */
+io.on('connection', (socket) => {
+    console.log(`[Mock Engine] Client linked. Injecting test tweets...`);
+    
+    // Injecting two testing variations (one Condition and one Order pattern)
+    socket.emit('atlas-tweet', { 
+        "Tweet Type": "Relationship", 
+        "Thing ID": "valyria_rpi", 
+        "Space ID": "ValyriaSSnug", 
+        "Name": "RelA", 
+        "Owner": "VendorX", 
+        "Category": "Cooperative", 
+        "Type": "Dependency", // This falls back to 'condition' mapping
+        "Description": "value > 45", 
+        "FS name": "Temperature Sensor", 
+        "SS name": "Air Conditioner" 
+    });
+
+    socket.emit('atlas-tweet', { 
+        "Tweet Type": "Relationship", 
+        "Thing ID": "valyria_rpi", 
+        "Space ID": "ValyriaSSnug", 
+        "Name": "RelB", 
+        "Owner": "VendorY", 
+        "Category": "Cooperative", 
+        "Type": "Control Order", // Triggers 'order' mapping branch
+        "Description": null, 
+        "FS name": "Motion Detector", 
+        "SS name": "Living Room Smart Light" 
+    });
+});
+
+///////////////////////////////////////////////
+
 const WEB_PORT = 3000;
     httpServer.listen(WEB_PORT, () => {
         console.log(`Web interface socket ready on port ${WEB_PORT}`);
