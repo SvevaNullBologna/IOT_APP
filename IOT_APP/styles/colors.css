@@ -1,53 +1,40 @@
 /*COLORS - Modern Tech Theme */
 
 :root {
-    /* Primary Branding */
     --accent-color: #6366f1;
-    /* Modern Indigo */
     --accent-text: #ffffff;
-    /* White text for better legibility on indigo */
 
     /* Backgrounds */
     --bg-main: #0f172a;
-    /* Rich, deep slate blue background */
     --tab-bg-inactive: rgba(255, 255, 255, 0.03);
     --tab-bg-hover: rgba(255, 255, 255, 0.08);
 
     /* Typography & Borders */
     --text-main: #f1f5f9;
-    /* Clean off-white */
     --border-color: rgba(255, 255, 255, 0.08);
-    /* Soft semi-transparent border */
     --font-family: 'Poppins', sans-serif;
 
     --tab-content-background: #1e293b;
-    /* Slightly lighter slate for content layers */
 
     --card-background-color: #1e293b;
     --card-hover-color: rgba(99, 102, 241, 0.1);
-    /* Subtle indigo tint on hover */
 
     --active-status-color: #10b981;
-    /* Vibrant emerald green */
     --offline-status-color: #ef4444;
-    /* Coral red */
 
-    /* Relationship tab - Semantic Variables */
+    /* Relationship tab */
     --relationship-editor-border: #334155;
-    /* Slate-600 */
     --relationship-editor-background: #1e293b;
-    /* Slate-800 */
     --drop-editor-zone-background: #0f172a;
-    /* Dropping zone matches deep background */
 
     --dropped-service-in-zone-background: #334155;
     --dropped-service-in-zone-box-shadow: rgba(0, 0, 0, 0.4);
 
-    /* Actuators (Outputs/Actions) - Vibrant Violet */
+    /* Actuators (Outputs/Actions) */
     --outline-actuator-service-in-zone: #a855f7;
     --outline-shadow-actuator-service-in-zone: rgba(168, 85, 247, 0.3);
 
-    /* Sensors (Inputs/Data) - Cyan/Teal */
+    /* Sensors (Inputs/Data) */
     --outline-sensor-service-in-zone: #06b6d4;
     --outline-shadow-sensor-service-in-zone: rgba(6, 182, 212, 0.3);
 
