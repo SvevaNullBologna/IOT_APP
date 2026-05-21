@@ -151,8 +151,6 @@ io.on('connection', (socket) => {
                 "Service Name": payload["Service Name"],
                 "Service Inputs": formatInputs(payload["Service Inputs"])
             };
-
-            // EXACTLY like Python
             const rawMessage = JSON.stringify(fixedPayload);
 
             console.log('[TCP OUTGOING]');
