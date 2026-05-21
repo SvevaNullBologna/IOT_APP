@@ -7,15 +7,14 @@ function all_services_status(status){
     services.forEach(service => {
        service.status = status; 
     });
-
     showServicesLists();
 } 
 
 function study_API(apiStr) {
     const result = {
         function_name: null,
-        inputs: {},   // {input_name: [data_types]}
-        outputs: {}   // Placeholder for later use
+        inputs: {},   
+        outputs: {}   
     };
 
     if (!apiStr) return result;
@@ -25,7 +24,6 @@ function study_API(apiStr) {
         result.function_name = nameMatch[1].trim();
     }
 
-    // 1. Isolate the input and output :  [, NULL] : (, NULL)
     const inputBracketMatch = apiStr.match(/\[(.*?)\]/);
     const outputBracketMatch = apiStr.match(/\((.*?)\)/);
 
@@ -33,19 +31,14 @@ function study_API(apiStr) {
         return result;
     }
 
-    const inputs =  inputBracketMatch[1];
-    const outputs = outputBracketMatch[1];
-
     function parseTokens(contentStr){
         const cleanStr = contentStr.trim();
-
         if(!cleanStr || cleanStr.toUpperCase() === 'NULL'){
             return {};
         }
 
         const rawTokens = cleanStr.split(',').map(t => t.trim());
         const tokens = rawTokens.filter(token => token.toUpperCase() !== 'NULL');
-
         const map = {};
 
         for(let i=0; i<tokens.length; i+=2){
@@ -74,7 +67,6 @@ function study_API(apiStr) {
 
 function add_service(serviceID, serviceName, thingId, type, API){
     let service = services.find(s => s.service_id === serviceID && s.service_name === serviceName);
-
     const parsedAPI = study_API(API);
     
     if (service) {
@@ -105,7 +97,6 @@ function add_service(serviceID, serviceName, thingId, type, API){
     }
 
     showServicesLists();
-
 }
 
 function readServiceMessage(tweet){
@@ -117,108 +108,163 @@ function readServiceMessage(tweet){
 
     if (!serviceId || !serviceName || !thingId || !API || !type) return;
 
-    // Run our structural parsing right now!
     const parsedAPI = study_API(API);
-
     add_service(serviceId, serviceName, thingId, type, API, parsedAPI);
-    
 }
 
+/*
+===========================================
+DYNAMIC CARD VIEW RENDERER
+===========================================
+*/
 function getServiceCard(service){
     const servicePayload = btoa(encodeURIComponent(JSON.stringify(service)));
-
-    // 1. Map Inputs to clean HTML tags/text
-    let inputsHTML = '<span class="no-params">None</span>';
     const inputKeys = Object.keys(service.inputs || {});
-    if (inputKeys.length > 0) {
-        inputsHTML = inputKeys.map(key => {
-            return `<span class="param-badge input-variant"><strong>${key}:</strong> ${service.inputs[key]}</span>`;
-        }).join(' ');
+    const hasInputs = inputKeys.length > 0;
+
+    // 1. Build small parameter badges for general identification info
+    let inputsHTML = '<span style="color: #64748b; font-style: italic;">None</span>';
+    if (hasInputs) {
+        inputsHTML = inputKeys.map(key => 
+            `<span style="background: rgba(14, 165, 233, 0.15); color: #38bdf8; padding: 2px 6px; border-radius: 4px; font-size: 0.85em; margin: 2px; display: inline-block;"><strong>${key}:</strong> ${service.inputs[key]}</span>`
+        ).join('');
     }
-        
-    // 2. Map Outputs to clean HTML tags/text
-    let outputsHTML = '<span class="no-params">None</span>';
+
+    let outputsHTML = '<span style="color: #64748b; font-style: italic;">None</span>';
     const outputKeys = Object.keys(service.outputs || {});
     if (outputKeys.length > 0) {
-        outputsHTML = outputKeys.map(key => {
-            return `<span class="param-badge output-variant"><strong>${key}:</strong> ${service.outputs[key]}</span>`;
-        }).join(' ');
+        outputsHTML = outputKeys.map(key => 
+            `<span style="background: rgba(16, 185, 129, 0.15); color: #34d399; padding: 2px 6px; border-radius: 4px; font-size: 0.85em; margin: 2px; display: inline-block;"><strong>${key}:</strong> ${service.outputs[key]}</span>`
+        ).join('');
     }
 
+    // 2. Generate input rows for the collapsible panel
+    const inputFieldsHTML = inputKeys.map(key => `
+        <div style="margin-bottom: 8px; text-align: left;">
+            <label style="display: block; font-size: 0.8em; color: #94a3b8; margin-bottom: 3px; font-weight: 500;">${key} (${service.inputs[key]})</label>
+            <input type="text" class="card-inline-input" data-param-key="${key}" placeholder="Enter value" required
+                   style="width: 100%; padding: 6px; background: #0f172a; border: 1px solid #334155; border-radius: 4px; color: #f8fafc; font-size: 0.85em; box-sizing: border-box; outline: none;">
+        </div>
+    `).join('');
+
     return `
-        <div class="iot-card thing-variant"
-        ondblclick="window.handleServiceDoubleClick('${servicePayload}', event)">
-            <div class="card-header">
-                <h4 class="thing-title">${service.service_name}</h4>
-                <div class="status-indicator ${service.status.toLowerCase()}"></div>
+        <div class="iot-card thing-variant" style="background: #1e293b; border: 1px solid #334155; border-radius: 8px; margin-bottom: 12px; position: relative; overflow: hidden; display: flex; flex-direction: column;">
+            
+            <div class="card-status-toast" style="position: absolute; top: 8px; right: 12px; background: #10b981; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.75em; font-weight: bold; opacity: 0; transform: translateY(-5px); transition: all 0.3s ease; pointer-events: none; z-index: 10;">Fired!</div>
+
+            <div style="padding: 12px 12px 6px 12px;">
+                <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                    <h4 class="thing-title" style="margin: 0; color: #f8fafc; font-size: 1em; font-weight: 600;">${service.service_name}</h4>
+                    <div class="status-indicator ${service.status.toLowerCase()}" style="width: 8px; height: 8px; border-radius: 50%; background: ${service.status.toLowerCase() === 'active' ? '#10b981' : '#ef4444'};"></div>
+                </div>
+                <div class="card-body" style="color: #cbd5e1; font-size: 0.85em; line-height: 1.4;">
+                    <p class="metadata" style="margin: 2px 0;"><strong>Service ID:</strong> ${service.service_id}</p>
+                    <p class="metadata" style="margin: 2px 0;"><strong>Thing ID:</strong> ${service.thing_id}</p>
+                </div>
             </div>
-            <div class="card-body">
-                <p class="metadata"><strong>Service ID:</strong> ${service.service_id}</p>
-                <p class="metadata"><strong>Thing ID:</strong> ${service.thing_id}</p>
+
+            <div class="input-config-drawer" style="display: none; padding: 4px 12px 10px 12px; background: #111827; border-top: 1px solid #334155; font-size: 0.85em;">
+                <p style="margin: 6px 0; color: #cbd5e1;"><strong>API Name:</strong> ${service.function_name || "None"}</p>
+                <p style="margin: 4px 0; color: #94a3b8;"><strong>Expected Inputs:</strong> ${inputsHTML}</p>
+                <p style="margin: 4px 0; color: #94a3b8; margin-bottom: 10px;"><strong>Outputs:</strong> ${outputsHTML}</p>
+                ${hasInputs ? `<div class="inputs-form-container" style="border-top: 1px dashed #334155; padding-top: 8px; margin-top: 8px;">${inputFieldsHTML}</div>` : ''}
             </div>
-            <div class="foot-body" style="padding: 10px; border-top: 1px solid #eee; font-size: 0.9em;">
-                <p class="metadata" style="margin-bottom: 6px;"><strong>Service name:</strong> ${service.function_name || "None"}</p>
-                <p style="margin: 4px 0;"><strong>Inputs:</strong> ${inputsHTML}</p>
-                <p style="margin: 4px 0;"><strong>Outputs:</strong> ${outputsHTML}</p>
+
+            <div class="foot-body" style="padding: 8px 12px; border-top: 1px solid #334155; background: #1e293b; display: flex; justify-content: space-between; align-items: center; margin-top: auto;">
+                <button class="set_input" onclick="window.handle_set_input(this)" title="Toggle Configuration View" 
+                        style="background: #334155; color: #cbd5e1; border: 1px solid #475569; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 0.8em; font-weight: bold; display: flex; align-items: center; justify-content: center; transition: all 0.2s;">
+                    V
+                </button>
+                <button class="run" onclick="window.handle_run_service(this, '${servicePayload}')" title="Execute Target System Operation Pipeline" 
+                        style="background: #0284c7; color: white; border: none; padding: 4px 14px; border-radius: 4px; cursor: pointer; font-size: 0.85em; font-weight: bold; transition: background 0.2s;">
+                    &gt;
+                </button>
             </div>
         </div>
     `;
 }
 
-
-
-window.handleServiceDoubleClick = function(payload, event){
-    if(event.target.closest('button') || event.target.closest('svg')){
-        return; 
-    } 
-
-    try {
-        const decodedData = decodeURIComponent(atob(payload));
-        const service = JSON.parse(decodedData);
-        console.log(`[UI] Double clicked service: ${service.service_name}`);
-
-        if(!window.atlas || !window.atlas.isConnected()){
-            alert("Cannot call service: AtlasBridge is currently offline.");
-            return;   
-        }
+/*
+===========================================
+INLINE CONTROL LOGIC HANDLERS
+===========================================
+*/
+window.handle_set_input = function(buttonElement) {
+    const card = buttonElement.closest('.iot-card');
+    const drawer = card.querySelector('.input-config-drawer');
+    
+    if (drawer) {
+        const isHidden = drawer.style.display === 'none';
+        drawer.style.display = isHidden ? 'block' : 'none';
         
-        const thingId = service.thing_id;
-        // Use our clean, pre-parsed functional name!
-        const serviceName = service.function_name || service.service_name; 
-        let serviceInputs = "()"; 
+        // Visual button interaction accent mapping updates
+        buttonElement.style.background = isHidden ? '#0284c7' : '#334155';
+        buttonElement.style.color = isHidden ? '#ffffff' : '#cbd5e1';
+        buttonElement.style.borderColor = isHidden ? '#0284c7' : '#475569';
+        buttonElement.innerText = isHidden ? '▲' : 'V';
+    }
+};
 
-        // Extract key names dynamically out of our pre-studied object map
-        const paramNames = Object.keys(service.inputs || {});
+window.handle_run_service = function(buttonElement, encodedPayload) {
+    try {
+        const decodedData = decodeURIComponent(atob(encodedPayload));
+        const service = JSON.parse(decodedData);
+        
+        const card = buttonElement.closest('.iot-card');
+        const inputElements = card.querySelectorAll('.card-inline-input');
+        const values = [];
+        let validationError = false;
 
-        if (paramNames.length > 0) {
-            const inputName = paramNames[0]; 
-            const allowedTypes = service.inputs[inputName].join(' or ');
-
-            const userInput = prompt(
-                `Service "${serviceName}" requires an argument.\n\n` +
-                `Parameter: "${inputName}"\n` +
-                `Allowed Types: [${allowedTypes}]\n\n` +
-                `Enter value:`
-            );
-
-            if (userInput === null) {
-                console.log(`[Test Fire] Cancelled call execution.`);
-                return;
+        // Extract input parameter entries directly from the form field elements
+        inputElements.forEach(input => {
+            const val = input.value.trim();
+            if (!val) {
+                validationError = true;
+                input.style.borderColor = '#ef4444'; // Flashes the border red if missing
+            } else {
+                input.style.borderColor = '#334155';
+                values.push(val);
             }
+        });
 
-            serviceInputs = `(${userInput.trim()})`;
+        if (validationError) {
+            // Auto-expand the configuration drawer if a field is missing values
+            const drawer = card.querySelector('.input-config-drawer');
+            const toggleBtn = card.querySelector('.set_input');
+            if (drawer && drawer.style.display === 'none') {
+                window.handle_set_input(toggleBtn);
+            }
+            return;
         }
 
-        console.log(`[Test Fire] Emitting Pre-Studied Payload: Thing: ${thingId} | Service: ${serviceName} | Inputs: ${serviceInputs}`);
-        window.atlas.callService(thingId, serviceName, serviceInputs);
-    }
-    catch(error){
-        console.error("Failed parsing encoded service payload context:", error);
+        const formattedInputString = `(${values.join(',')})`;
+        const thingId = service.thing_id;
+        const serviceName = service.function_name || service.service_name;
+
+        console.log(`[Inline Runner] Emitting: Thing: ${thingId} | Service: ${serviceName} | Args: ${formattedInputString}`);
+
+        if (window.atlas && typeof window.atlas.callService === 'function') {
+            window.atlas.callService(thingId, serviceName, formattedInputString);
+            
+            // Trigger the small localized text confirmation banner toast layout
+            const toast = card.querySelector('.card-status-toast');
+            if (toast) {
+                toast.style.opacity = '1';
+                toast.style.transform = 'translateY(0)';
+                setTimeout(() => {
+                    toast.style.opacity = '0';
+                    toast.style.transform = 'translateY(-5px)';
+                }, 1500);
+            }
+        } else {
+            console.error("The native connection bridge layers to window.atlas are unconfigured.");
+        }
+    } catch (err) {
+        console.error("Engine execution state failure evaluating execution string:", err);
     }
 };
 
 function sortServices(){
-    // Handles both your mock types (Actuator/Sensor) and Atlas types (Action/Report)
     const actuators = services.filter(s => 
         s.type.toLowerCase() === "actuator" || s.type.toLowerCase() === "action"
     );
@@ -243,20 +289,19 @@ function showServicesLists(){
     renderList(actuatorHTML, 'actuators-sensors-list-container');
     renderList(sensorHTML, 'services-sensors-list-container');
 
-    if(typeof renderDraggableServicesList === 'function'){ //keeping drag and rop panel synchronized with active/inactive 
+    if(typeof renderDraggableServicesList === 'function'){ 
         renderDraggableServicesList();
     }
 }
 
-
+/* =============================================
+TAB LIFE CYCLE
+============================================== */
 function initServicesTab() {
     console.log("Services initialized");
-
-    // Load persistent data if available, otherwise stay with mock defaults
     showServicesLists();
 }
 
 function cleanupServicesTab() {
     console.log("Services cleaned up");
-    // Completely clean of any active timers or intervals!
 }
