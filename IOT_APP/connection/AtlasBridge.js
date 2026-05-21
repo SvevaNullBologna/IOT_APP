@@ -74,5 +74,3 @@ export class AtlasBridge {//it wraps the socket
         return true;
     }
 }
-
-window.atlas = new AtlasBridge();

@@ -244,7 +244,7 @@ window.handle_run_service = function(buttonElement, encodedPayload) {
         console.log(`[Inline Runner] Emitting: Thing: ${thingId} | Service: ${serviceName} | Args: ${formattedInputString}`);
 
         if (window.atlas && typeof window.atlas.callService === 'function') {
-            window.atlas.callService(thingId, serviceName, formattedInputString);
+            window.atlas.callService(thingId, serviceName, values);
             
             // Trigger the small localized text confirmation banner toast layout
             const toast = card.querySelector('.card-status-toast');

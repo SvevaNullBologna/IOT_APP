@@ -2,6 +2,8 @@
 import { AtlasBridge } from './AtlasBridge.js';
 
 const atlas = new AtlasBridge();
+window.atlas = atlas;
+
 let unsubscribeTweet = null;
 let unsubscribeStatus = null;
 
