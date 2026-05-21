@@ -80,7 +80,6 @@ function add_service(serviceID, serviceName, thingId, type, API){
     if (service) {
         service.status = "Active";
         service.type = type;
-        service.API = API,
         service.function_name = parsedAPI.function_name || service.function_name;
         service.inputs = parsedAPI.inputs;
         service.outputs = parsedAPI.outputs;
@@ -91,7 +90,6 @@ function add_service(serviceID, serviceName, thingId, type, API){
             thing_id: thingId,
             type: type, 
             status: "Active",
-            API: API,
             function_name: parsedAPI.function_name,
             inputs: parsedAPI.inputs,
             outputs: parsedAPI.outputs
@@ -122,8 +120,6 @@ function readServiceMessage(tweet){
     // Run our structural parsing right now!
     const parsedAPI = study_API(API);
 
-    console.log("PARSED API", parsedAPI);
-
     add_service(serviceId, serviceName, thingId, type, API, parsedAPI);
     
 }
@@ -131,13 +127,23 @@ function readServiceMessage(tweet){
 function getServiceCard(service){
     const servicePayload = btoa(encodeURIComponent(JSON.stringify(service)));
 
-    const displayInputs = Object.keys(service.inputs || {}).length > 0 
-        ? JSON.stringify(service.inputs) 
-        : "None";
+    // 1. Map Inputs to clean HTML tags/text
+    let inputsHTML = '<span class="no-params">None</span>';
+    const inputKeys = Object.keys(service.inputs || {});
+    if (inputKeys.length > 0) {
+        inputsHTML = inputKeys.map(key => {
+            return `<span class="param-badge input-variant"><strong>${key}:</strong> ${service.inputs[key]}</span>`;
+        }).join(' ');
+    }
         
-    const displayOutputs = Object.keys(service.outputs || {}).length > 0 
-        ? JSON.stringify(service.outputs) 
-        : "None";
+    // 2. Map Outputs to clean HTML tags/text
+    let outputsHTML = '<span class="no-params">None</span>';
+    const outputKeys = Object.keys(service.outputs || {});
+    if (outputKeys.length > 0) {
+        outputsHTML = outputKeys.map(key => {
+            return `<span class="param-badge output-variant"><strong>${key}:</strong> ${service.outputs[key]}</span>`;
+        }).join(' ');
+    }
 
     return `
         <div class="iot-card thing-variant"
@@ -148,8 +154,12 @@ function getServiceCard(service){
             </div>
             <div class="card-body">
                 <p class="metadata"><strong>Service ID:</strong> ${service.service_id}</p>
-                <p class="metadata"><strong>API:</strong> ${service.API}</p>
                 <p class="metadata"><strong>Thing ID:</strong> ${service.thing_id}</p>
+            </div>
+            <div class="foot-body" style="padding: 10px; border-top: 1px solid #eee; font-size: 0.9em;">
+                <p class="metadata" style="margin-bottom: 6px;"><strong>Service name:</strong> ${service.function_name || "None"}</p>
+                <p style="margin: 4px 0;"><strong>Inputs:</strong> ${inputsHTML}</p>
+                <p style="margin: 4px 0;"><strong>Outputs:</strong> ${outputsHTML}</p>
             </div>
         </div>
     `;

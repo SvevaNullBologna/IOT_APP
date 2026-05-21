@@ -93,9 +93,14 @@ function getDraggableServiceCard(service) {
             </div>
             <div class="card-body">
                 <p class="metadata">
-                    <strong>API:</strong>
-                    ${service.API}
+                    <strong> service ID:</strong>
+                    ${service.service_id}
                 </p>
+                <p class="metadata">
+                    <strong> thing ID:</strong>
+                    ${service.thing_id}
+                </p>
+                
             </div>
         </div>
     `;
