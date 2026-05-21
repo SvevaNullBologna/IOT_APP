@@ -173,11 +173,11 @@ function getServiceCard(service){
             <div class="foot-body" style="padding: 8px 12px; border-top: 1px solid #334155; background: #1e293b; display: flex; justify-content: space-between; align-items: center; margin-top: auto;">
                 <button class="set_input" onclick="window.handle_set_input(this)" title="Toggle Configuration View" 
                         style="background: #334155; color: #cbd5e1; border: 1px solid #475569; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 0.8em; font-weight: bold; display: flex; align-items: center; justify-content: center; transition: all 0.2s;">
-                    V
+                    ▼
                 </button>
                 <button class="run" onclick="window.handle_run_service(this, '${servicePayload}')" title="Execute Target System Operation Pipeline" 
                         style="background: #0284c7; color: white; border: none; padding: 4px 14px; border-radius: 4px; cursor: pointer; font-size: 0.85em; font-weight: bold; transition: background 0.2s;">
-                    &gt;
+                    ▶
                 </button>
             </div>
         </div>
