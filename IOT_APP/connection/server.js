@@ -4,8 +4,8 @@ const http = require('http');
 const { Server } = require('socket.io');
 
 const MULTICAST_GROUP = '232.1.1.1';
-const PORT = 1235;
-
+const ATLAS_PORT = 1235;
+ 
 
 const httpServer = http.createServer();
 const io = new Server(httpServer, {
@@ -28,6 +28,22 @@ function getLocalIP() {
         }
     }
     return '0.0.0.0';
+}
+
+function buildAtlasTweet(payload) {
+    const entries = Object.entries(payload).map(([k, v]) => {
+        if (Array.isArray(v)) {
+            v = `(${v.join(',')})`;
+        }
+
+        if (v === null || v === undefined) {
+            v = "NULL";
+        }
+
+        return `"${k}" : "${v}"`;
+    });
+
+    return `Service call : { ${entries.join(', ')} }`;
 }
 
 const localIP = getLocalIP();
@@ -125,12 +141,43 @@ server.on('listening', () => {
 });
 
 // IMPORTANT: Bind to the local IP specifically, just like your Python code did
-server.bind(PORT, localIP);
+server.bind(ATLAS_PORT, localIP);
 
 /* =====================================================
 MOCK INJECTION HOOK
 ====================================================== */
+
 io.on('connection', (socket) => {
+
+    socket.on('tweet', (payload) => {
+        try {
+            // Ensure inputs are an actual array object, not wrapped in a string
+            if (typeof payload['Service Inputs'] === 'string') {
+                try {
+                    payload['Service Inputs'] = JSON.parse(payload['Service Inputs']);
+                } catch(e) {
+                    // If it's single value like "1", put it inside a clean array
+                    payload['Service Inputs'] = [payload['Service Inputs']];
+                }
+            }
+
+            // Reformat the clean JSON object back into a string payload for the Atlas network
+            const rawMessage = buildAtlasTweet(payload);
+            const buffer = Buffer.from(rawMessage);
+            console.log(rawMessage);
+
+            server.send(buffer, 0, buffer.length, ATLAS_PORT, MULTICAST_GROUP, (err) => {
+                if (err) {
+                    console.error(`[Gateway] Failed to multicast message over UDP:`, err);
+                } else {
+                    console.log(`[Gateway] Multicasted clean service call to ${MULTICAST_GROUP}:${ATLAS_PORT}`);
+                }
+            });
+        } catch(err) {
+            console.error(`[Gateway] Serialization exception routing payload:`, err);
+        }
+    });
+
     console.log(`[Mock Engine] Client linked. Injecting test tweets...`);
     
     // Injecting two testing variations (one Condition and one Order pattern)

@@ -7,6 +7,8 @@ window.atlas = atlas;
 let unsubscribeTweet = null;
 let unsubscribeStatus = null;
 
+window.thing_languages = [];
+
 /**
  * Avvia l'ascolto dei tweet dal bridge
  */
@@ -88,6 +90,32 @@ function read_atlas_tweet(tweet) {
         }
         else{
             console.warn('Funzione readRelationshipMessage non ancora caricata.');
+        }
+    }
+    else if (type === 'Identity_Language'){
+        /*
+        Announcing tweet:  { "Tweet Type" : "Identity_Language","Thing ID" : "Raspberry_Sonar_M4_S1","Space ID" : "Project_space","Network Name" : "HotspotBello","Communication Language" : "Sockets","IP" : "0.0.0.0","Port" : "6668" }
+         */
+        
+        const thingId = tweet['Thing ID'];
+        const ip = tweet['IP'];
+        const port = tweet['Port'];
+
+        if(!thingId || !ip || !port){
+            return;
+        }
+        
+        let language = window.thing_languages.find(t => t.thingId === thingId);
+        if(language){
+            language.ip = ip;
+            language.port = port;
+        }
+        else{
+            window.thing_languages.push({
+                thingId: thingId,
+                ip: ip,
+                port: port
+            });
         }
     }
 }

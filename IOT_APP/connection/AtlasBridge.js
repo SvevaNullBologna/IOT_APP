@@ -61,6 +61,11 @@ export class AtlasBridge {//it wraps the socket
             return false;
         }
 
+        let language = window.thing_languages.find(t => t.thingId === thingId);
+        if(!language){
+            return;
+        }
+
         const payload = {
             "Tweet Type": "Service call",
             "Thing ID": thingId,
