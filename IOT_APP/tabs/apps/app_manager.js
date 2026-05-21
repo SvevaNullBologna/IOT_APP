@@ -71,6 +71,33 @@ function delete_app(appName) {
     }
 }
 
+
+
+function run_app(appName){
+    if(isAppRunning(appName)){
+        console.log(`${appName} is already running`);
+        return;
+    }
+
+    apps = get_saved_apps();
+
+    
+    
+    //to make a call to atlas WE need: 
+    // Tweet Type : Service call,
+    // Thing ID : ID of the smart space declared in the IoT-DDL,
+    // Service Name : name of the function to call,
+    // Service Inputs : list of expected inputs (0,1,4)
+
+
+    //to get feedback, get the field : Service Result
+
+}
+
+function pause_app(app_name){
+
+}
+
 /*
 ===========================================
 SAVE TRANSACTION METHOD

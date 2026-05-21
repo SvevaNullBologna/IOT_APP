@@ -54,5 +54,26 @@ export class AtlasBridge {//it wraps the socket
     isConnected() {
         return this.connected;
     }
+
+    callService(thingId, serviceName, serviceInputs = []){ 
+        if(!this.connected){
+            console.error('[AtlasBridge] Cannot call service: Disconnected.');
+            return {
+                    called_service: false,
+                    result: null
+                }
+        }
+
+        const payload = {
+            "Tweet Type": "Service call",
+            "Thing ID": thingId,
+            "Service Name": serviceName,
+            "Service Inputs": serviceInputs
+        };
+
+        this.socket.emit('tweet', payload);
+        console.log(`[AtlasBridge] Emitting service call:`, payload);
+
+    }
 }
 

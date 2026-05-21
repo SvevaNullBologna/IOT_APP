@@ -52,8 +52,10 @@ function readServiceMessage(tweet){
 }
 
 function getServiceCard(service){
+    const servicePayload = btoa(encodeURIComponent(JSON.stringify(service)));
     return `
         <div class="iot-card thing-variant">
+        ondblclick="window.handleServiceDoubleClick('${servicePayload}', event)"
             <div class="card-header">
                 <h4 class="thing-title">${service.service_name}</h4>
                 <div class="status-indicator ${service.status.toLowerCase()}"></div>
@@ -66,6 +68,30 @@ function getServiceCard(service){
         </div>
     `;
 }
+
+window.handleServiceDoubleClick = function(payload, event){
+    if(event.target.closest('button') || event.target.closest('svg')){
+        return; //prevents loading the service if the user is clicking action buttons
+    } 
+
+    try{
+        const decodedData = decodeURIComponent(atob(payload));
+        const service = JSON.parse(decodedData);
+        console.log(`[UI] Double clicked service. Preparing for service-call : ${service.service_name}`);
+
+        if(!window.atlas || !window.atlas.isConnected()){
+            alert("Cannot call service: AtlasBridge is currently offline.");
+            return;   
+        }
+
+        
+
+    }
+    catch(error){
+        console.error("Failed parsing encoded service payload context:", error);
+    }
+
+};
 
 function sortServices(){
     // Handles both your mock types (Actuator/Sensor) and Atlas types (Action/Report)
@@ -97,6 +123,7 @@ function showServicesLists(){
         renderDraggableServicesList();
     }
 }
+
 
 function initServicesTab() {
     console.log("Services initialized");
