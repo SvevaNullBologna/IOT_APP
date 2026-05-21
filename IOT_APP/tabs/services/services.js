@@ -201,7 +201,7 @@ window.handle_set_input = function(buttonElement) {
         buttonElement.style.background = isHidden ? '#0284c7' : '#334155';
         buttonElement.style.color = isHidden ? '#ffffff' : '#cbd5e1';
         buttonElement.style.borderColor = isHidden ? '#0284c7' : '#475569';
-        buttonElement.innerText = isHidden ? '▲' : 'V';
+        buttonElement.innerText = isHidden ? '▲' : '▼';
     }
 };
 
