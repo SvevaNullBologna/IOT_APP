@@ -6,7 +6,7 @@ STATE & CONFIGURATION MANAGEMENT
 const app_folder = "saved_apps";
 
 // Tracks active engine threads running in browser memory
-const runningApps = new Set();
+const runningApps = new Map();
 
 /*
 ===========================================
@@ -46,6 +46,8 @@ function toggle_app_state(appName, shouldRun) {
 }
 
 function delete_app(appName) {
+    pause_app(appName);
+
     if (!confirm(`Are you sure you want to completely delete "${appName}"?`)) {
         return;
     }
@@ -78,14 +80,12 @@ function run_app(appName){
 
     apps = get_saved_apps();
 
-    
-    
-    //to make a call to atlas WE need: 
-    // Tweet Type : Service call,
-    // Thing ID : ID of the smart space declared in the IoT-DDL,
-    // Service Name : name of the function to call,
-    // Service Inputs : list of expected inputs (0,1,4)
 
+
+    if (window.atlas && typeof window.atlas.callService === 'function') {
+            window.atlas.callService(thingId, serviceName, values);
+            
+    }
 
     //to get feedback, get the field : Service Result
 
