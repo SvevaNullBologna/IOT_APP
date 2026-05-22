@@ -97,13 +97,11 @@ function showThingsList(){
 }
 
 function initThingsTab() {
-    console.log("INIT things");
-
     // Load persistent data if available, otherwise fallback to standard mock array
     showThingsList(); 
 }
 
 function cleanupThingsTab() {
-    console.log("CLEANUP things");
+    console.log("Things tab cleaned up");
     // No intervals left to clear out here anymore!
 }

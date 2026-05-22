@@ -67,9 +67,6 @@ function read_atlas_tweet(tweet) {
         console.log(tweet);
         return;
     }
-    else{
-        console.log("TYPE:",type);
-    }
     if (type === 'Service') {
         // Usiamo window. per sicurezza dato che sono definite in script globali
         if (typeof window.readServiceMessage === 'function') {

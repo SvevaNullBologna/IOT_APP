@@ -6,7 +6,7 @@ const { Server } = require('socket.io');
 
 const MULTICAST_GROUP = '232.1.1.1';
 const ATLAS_PORT = 1235;
- 
+
 
 const httpServer = http.createServer();
 const io = new Server(httpServer, {
@@ -37,6 +37,36 @@ function formatInputs(inputs) {
     }
     return `(${inputs})`;
 }
+
+
+/* UTILS FOR SAVING PORT AND IP  */
+const langRegistry = {}; //for knowing the ports 
+
+function add_langRegistry(clean_tweet, rinfo){
+    if(clean_tweet["Tweet Type"] !== "Identity_Language") return;
+    
+
+    const thingId = clean_tweet["Thing ID"];
+    const port = clean_tweet["Port"];
+
+    if(!thingId || !port) return;
+
+    langRegistry[thingId] = {
+        ip: rinfo.address,
+        port: Number(port)
+    };
+
+    console.log("REGISTERED THINGS:", langRegistry);
+}
+
+function get_langRegistry(thing_id){
+    return langRegistry[thing_id];
+}
+
+/* */
+
+
+/* SOCKET LOGIC IMPLEMENTATION */
 
 const localIP = getLocalIP();
 const server = dgram.createSocket({ type: 'udp4', reuseAddr: true });
@@ -112,6 +142,9 @@ server.on('message', (msg, rinfo) => {
         console.log(`CLEAN TWEET FROM: ${rinfo.address}`);
         console.dir(result, { colors: true });
 
+        //saving IN CASE the port and IP 
+        add_langRegistry(result, rinfo);
+
         // 4. Send the clean object to the browser
         io.emit('atlas-tweet', result);
     } else {
@@ -136,13 +169,22 @@ server.on('listening', () => {
 server.bind(ATLAS_PORT, localIP);
 
 /* =====================================================
-MOCK INJECTION HOOK
+SEND TO ATLAS AND MOCK INJECTION HOOK FOR RELATIONSHIPS
 ====================================================== */
+
+
+
 
 io.on('connection', (socket) => {
 
     socket.on('tweet', (payload) => {
         try {
+
+            let lang_registry = get_langRegistry(payload["Thing ID"]);
+            if(!lang_registry){
+                console.warn("Too early for this service call! Waiting for more knowledge... ");
+                return;
+            }
 
             const fixedPayload = {
                 "Tweet Type": "Service call",
@@ -156,13 +198,16 @@ io.on('connection', (socket) => {
             console.log('[TCP OUTGOING]');
             console.log(rawMessage);
 
+            
             const client = new net.Socket();
 
             // YOUR ATLAS PI
-            const THING_IP = '10.206.141.47';
+            const THING_IP = lang_registry.ip;
 
             // SAME PORT USED IN PYTHON
-            const SERVICE_PORT = 6668;
+            const SERVICE_PORT = lang_registry.port;
+
+            console.log(THING_IP, SERVICE_PORT);
 
             client.connect(SERVICE_PORT, THING_IP, () => {
 
