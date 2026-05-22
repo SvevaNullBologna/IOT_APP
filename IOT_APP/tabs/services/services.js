@@ -122,7 +122,6 @@ function getServiceCard(service){
     const inputKeys = Object.keys(service.inputs || {});
     const hasInputs = inputKeys.length > 0;
 
-    // 1. Build small parameter badges for general identification info
     let inputsHTML = '<span style="color: #64748b; font-style: italic;">None</span>';
     if (hasInputs) {
         inputsHTML = inputKeys.map(key => 
@@ -138,7 +137,6 @@ function getServiceCard(service){
         ).join('');
     }
 
-    // 2. Generate input rows for the collapsible panel
     const inputFieldsHTML = inputKeys.map(key => `
         <div style="margin-bottom: 8px; text-align: left;">
             <label style="display: block; font-size: 0.8em; color: #94a3b8; margin-bottom: 3px; font-weight: 500;">${key} (${service.inputs[key]})</label>
@@ -146,6 +144,25 @@ function getServiceCard(service){
                    style="width: 100%; padding: 6px; background: #0f172a; border: 1px solid #334155; border-radius: 4px; color: #f8fafc; font-size: 0.85em; box-sizing: border-box; outline: none;">
         </div>
     `).join('');
+
+    // Dynamic generation block for printing your sonar answers or API responses
+    let executionResponseHTML = '';
+    if (service.last_result !== undefined && service.last_result !== null) {
+        const badgeColor = service.last_status ? '#10b981' : '#f59e0b';
+        const bgAccent = service.last_status ? 'rgba(16, 185, 129, 0.1)' : 'rgba(245, 158, 11, 0.1)';
+        
+        executionResponseHTML = `
+            <div class="execution-response-container" style="margin-top: 8px; padding: 8px; background: ${bgAccent}; border: 1px solid ${badgeColor}40; border-radius: 6px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                    <span style="font-size: 0.75em; text-transform: uppercase; letter-spacing: 0.05em; color: #94a3b8; font-weight: bold;">Last Return Matrix</span>
+                    <span style="font-size: 0.75em; font-weight: bold; color: ${badgeColor};">${service.last_status ? 'SUCCESS' : 'WARNING'}</span>
+                </div>
+                <div style="font-family: monospace; font-size: 1.1em; color: #f8fafc; font-weight: 600;">
+                    ${service.last_result}
+                </div>
+            </div>
+        `;
+    }
 
     return `
         <div class="iot-card thing-variant" style="background: #1e293b; border: 1px solid #334155; border-radius: 8px; margin-bottom: 12px; position: relative; overflow: hidden; display: flex; flex-direction: column;">
@@ -160,6 +177,7 @@ function getServiceCard(service){
                 <div class="card-body" style="color: #cbd5e1; font-size: 0.85em; line-height: 1.4;">
                     <p class="metadata" style="margin: 2px 0;"><strong>Service ID:</strong> ${service.service_id}</p>
                     <p class="metadata" style="margin: 2px 0;"><strong>Thing ID:</strong> ${service.thing_id}</p>
+                    ${executionResponseHTML} 
                 </div>
             </div>
 
@@ -263,6 +281,33 @@ window.handle_run_service = function(buttonElement, encodedPayload) {
         console.error("Engine execution state failure evaluating execution string:", err);
     }
 };
+
+function readServiceCallReply(tweet){
+    const thingId = tweet["Thing ID"]
+    const service_name = tweet["Service Name"]
+    const service_status = tweet["Status"]
+    const result = tweet["Service Result"]
+
+    if(!thingId || !service_name || !service_status || !result) return;
+
+    console.log("ReadServiceCallReply called");
+    
+    let service = services.find(service => service.thing_id === thingId && service.service_name === service_name );
+
+    if(!service){
+        console.warn("Service not found for reply:", thingId, service_name);
+    }
+    
+    service.last_result = result; 
+    service.last_status = service_status === "Successful";
+
+    console.log("last_result", service.last_result);
+    console.log("last_status", service.last_status);
+    showServicesLists();
+    
+}
+
+/* DISPLAY ON TAB */
 
 function sortServices(){
     const actuators = services.filter(s => 
