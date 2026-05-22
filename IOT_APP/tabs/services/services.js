@@ -305,8 +305,8 @@ function readServiceCallReply(tweet){
     console.log("last_status", service.last_status);
     showServicesLists();
 
-
-    const trackingKey =`${thingId}:${service_name}`;
+    /*
+   const trackingKey =`${thingId}:${service_name}`;
 
     for (const [appName, runtime] of runningApps.entries()) {
         if (runtime.waitingResolvers && runtime.waitingResolvers.has(trackingKey)) {
@@ -322,8 +322,7 @@ function readServiceCallReply(tweet){
                 result: result
             });
         }
-    }
-    
+    }*/
 }
 
 /* DISPLAY ON TAB */

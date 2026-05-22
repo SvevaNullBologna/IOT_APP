@@ -383,7 +383,7 @@ async function handleNodeConnectionClick(targetNode) {
     relationshipState.isWaitingForModal = true;
 
     try {
-        const result = await showConnectionModal();
+        const result = await showConnectionModal(sourceNode);
         if (result) {
             relationshipState.connections.push({
                 from: sourceNode,
@@ -401,56 +401,135 @@ async function handleNodeConnectionClick(targetNode) {
     }
 }
 
+
 /* =====================================================
 MODAL LOGIC
 ====================================================== */
-
-function showConnectionModal() {
+function showConnectionModal(sourceNode) {
     return new Promise((resolve) => {
+        let availableOutputs = [];
+        
+        // 1. Correctly extract outputs from the Object map schema
+        try {
+            const payload = sourceNode.getAttribute('data-service');
+            if (payload) {
+                const serviceObj = JSON.parse(decodeURIComponent(atob(payload)));
+                
+                if (serviceObj.outputs && typeof serviceObj.outputs === 'object' && !Array.isArray(serviceObj.outputs)) {
+                    // Extract keys out of the map layer (e.g. {"status": "string"} -> ["status"])
+                    availableOutputs = Object.keys(serviceObj.outputs); 
+                } else if (serviceObj.outputs && Array.isArray(serviceObj.outputs)) {
+                    availableOutputs = serviceObj.outputs;
+                } else if (serviceObj.output) {
+                    availableOutputs = Array.isArray(serviceObj.output) ? serviceObj.output : [serviceObj.output];
+                }
+            }
+        } catch (e) {
+            console.error("[Modal Engine] Failed to parse source node metadata context:", e);
+        }
+
+        // Determine true validation capability
+        const hasValidOutputs = availableOutputs.length > 0;
+
+        // Fallback fallback string wrapper only for display completeness
+        if (availableOutputs.length === 0) {
+            availableOutputs = ["value"]; 
+        }
+
         const overlay = createElement('div', 'modal-overlay');
         
         overlay.innerHTML = `
-            <div class="connection-modal">
-                <h3>Select Connection Type</h3>
-                <div class="modal-options-row">
-                    <button class="modal-btn" id="btn-opt-order">Order Based</button>
-                    <button class="modal-btn" id="btn-opt-condition-toggle">Condition Based</button>
+            <div class="connection-modal" style="max-width: 450px; padding: 20px; font-family: sans-serif;">
+                <h3 style="margin-top: 0;">Select Connection Type</h3>
+                
+                <div class="modal-options-row" style="display: flex; gap: 10px; margin-bottom: 15px;">
+                    <button class="modal-btn" id="btn-opt-order" style="flex: 1; padding: 10px; cursor: pointer;">Sequential Link (Order)</button>
+                    <button class="modal-btn" id="btn-opt-condition-toggle" style="flex: 1; padding: 10px; cursor: pointer;">Conditional Trigger</button>
                 </div>
-                <div class="condition-input-wrapper" id="condition-field-block" style="display: none;">
-                    <input type="text" class="modal-input" id="modal-cond-text" placeholder="e.g. value > 10" />
-                    <button class="modal-btn action-set-condition" id="btn-opt-set-condition">Set Condition</button>
+
+                <div class="condition-builder-wrapper" id="condition-field-block" style="display: none; flex-direction: column; gap: 10px; background: #f5f5f5; padding: 15px; border-radius: 6px; margin-bottom: 15px;">
+                    <label style="font-size: 13px; font-weight: bold; color: #555;">Define Trigger Rule:</label>
+                    
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                        <select id="modal-cond-variable" style="flex: 1; padding: 8px; border-radius: 4px; border: 1px solid #ccc; min-width: 0;">
+                            ${availableOutputs.map(out => `<option value="${out}">${out}</option>`).join('')}
+                        </select>
+
+                        <select id="modal-cond-operator" style="width: 70px; padding: 8px; border-radius: 4px; border: 1px solid #ccc; font-weight: bold; flex-shrink: 0;">
+                            <option value="==">==</option>
+                            <option value=">">&gt;</option>
+                            <option value="<">&lt;</option>
+                            <option value=">=">&gt;=</option>
+                            <option value="<=">&lt;=</option>
+                        </select>
+
+                        <input type="text" id="modal-cond-value" placeholder="10, true, 'on'" style="flex: 1; min-width: 0; box-sizing: border-box; padding: 8px; border-radius: 4px; border: 1px solid #ccc;" />
+                    </div>
+
+                    <button class="modal-btn action-set-condition" id="btn-opt-set-condition" style="padding: 8px; background: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer; margin-top: 5px;">
+                        Save Rule Connection
+                    </button>
                 </div>
-                <hr class="modal-divider" />
-                <button class="modal-btn-cancel" id="btn-opt-cancel">Cancel</button>
+
+                <hr class="modal-divider" style="border: 0; border-top: 1px solid #ddd; margin: 15px 0;" />
+                <button class="modal-btn-cancel" id="btn-opt-cancel" style="width: 100%; padding: 8px; background: #ccc; border: none; border-radius: 4px; cursor: pointer;">Cancel</button>
             </div>
         `;
         
         document.body.appendChild(overlay);
         
         const condBlock = overlay.querySelector('#condition-field-block');
-        const condInput = overlay.querySelector('#modal-cond-text');
+        const condToggleBtn = overlay.querySelector('#btn-opt-condition-toggle');
+        const varSelect = overlay.querySelector('#modal-cond-variable');
+        const opSelect = overlay.querySelector('#modal-cond-operator');
+        const valInput = overlay.querySelector('#modal-cond-value');
         
         const closeModal = (value) => {
             overlay.remove();
             resolve(value); 
         };
 
+        // Correctly handle blocking using our boolean check variable
+        if (!hasValidOutputs) {
+            condToggleBtn.disabled = true;
+            condToggleBtn.style.opacity = '0.4';
+            condToggleBtn.style.cursor = 'not-allowed';
+            condToggleBtn.title = "This service returns no output parameters to validate conditions against.";
+        }
+
         overlay.querySelector('#btn-opt-order').addEventListener('click', () => {
             closeModal({ type: CONNECTION_TYPES.ORDER, condition: null });
         });
 
-        overlay.querySelector('#btn-opt-condition-toggle').addEventListener('click', () => {
+        condToggleBtn.addEventListener('click', () => {
+            if (condToggleBtn.disabled) return;
             condBlock.style.display = 'flex';
-            condInput.focus();
+            valInput.focus();
         });
 
         overlay.querySelector('#btn-opt-set-condition').addEventListener('click', () => {
-            const expression = condInput.value.trim();
-            if (!expression) {
-                condInput.style.borderColor = '#ff6b6b';
+            const leftVar = varSelect.value;
+            const operator = opSelect.value;
+            let rightVal = valInput.value.trim();
+
+            if (!rightVal) {
+                valInput.style.borderColor = '#ff6b6b';
                 return;
             }
-            closeModal({ type: CONNECTION_TYPES.CONDITION, condition: expression });
+
+            if (rightVal.toLowerCase() === 'true' || rightVal.toLowerCase() === 'false') {
+                rightVal = rightVal.toLowerCase();
+            } else if (isNaN(rightVal)) {
+                const cleanStr = rightVal.replace(/['"]/g, '');
+                rightVal = `"${cleanStr}"`;
+            }
+
+            const fullExpression = `${leftVar} ${operator} ${rightVal}`;
+
+            closeModal({ 
+                type: CONNECTION_TYPES.CONDITION, 
+                condition: fullExpression 
+            });
         });
 
         overlay.querySelector('#btn-opt-cancel').addEventListener('click', () => closeModal(null));

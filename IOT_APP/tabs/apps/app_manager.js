@@ -7,7 +7,14 @@ const app_folder = "saved_apps";
 
 // Tracks active engine threads running in browser memory
 // Map: appName -> {app, running: true, waitingResolvers: Map}
-const runningApps = new Map();
+const runningApps = new Set();
+const waitingOutputs = new Set();
+const pausedApps = new Set();
+
+
+window.runningApps = runningApps;
+window.waitingOutputs = waitingOutputs;
+window.pausedApps = pausedApps;
 
 /*
 ===========================================
@@ -18,21 +25,20 @@ function get_saved_apps(){
     const data = localStorage.getItem(app_folder);
     return data ? JSON.parse(data) : [];
 }
-
 /*
 ===========================================
 APPLICATION LIFECYCLE & ENGINE MANAGEMENT
 ===========================================
 */
 function isAppRunning(appName) {
-    if (!runningApps.has(appName)) return false;
-    return runningApps.get(appName).running === true;
+    return runningApps.has(appName);
 }
 
 function pause_app(appName) {
     if (runningApps.has(appName)) {
-        const runtime = runningApps.get(appName);
-        runtime.running = false;
+        runningApps.delete(appName);
+        pausedApps.add(appName);
+
         console.log(`[Engine] Application paused: ${appName}`);
     }
     if (typeof renderAppsList === 'function') {
@@ -41,16 +47,16 @@ function pause_app(appName) {
 }
 
 function terminate_app(appName) {
-    if (runningApps.has(appName)) {
-        const runtime = runningApps.get(appName);
-        runtime.running = false;
-        // Reject all outstanding event loops to clear memory leaks
-        if (runtime.waitingResolvers) {
-            runtime.waitingResolvers.clear();
+    runningApps.delete(appName);
+    pausedApps.delete(appName);
+
+    for(const entry of waitingOutputs){
+        if(entry.appName === appName){
+            waitingOutputs.delete(entry);
         }
-        runningApps.delete(appName);
-        console.log(`[Engine] Application terminated: ${appName}`);
     }
+
+    console.log(`[Engine] Application terminated: ${appName}`);
     if (typeof renderAppsList === 'function') {
         renderAppsList();
     }
@@ -58,12 +64,13 @@ function terminate_app(appName) {
 
 function toggle_app_state(appName, shouldRun) {
     if (shouldRun) {
-        if (runningApps.has(appName)) {
-            const runtime = runningApps.get(appName);
-            if (!runtime.running) {
-                runtime.running = true;
-                console.log(`[Engine] Resumed application: ${appName}`);
-            }
+        if (pausedApps.has(appName)) {
+            pausedApps.delete(appName);
+            runningApps.add(appName);
+            console.log(`[Engine] Resumed application: ${appName}`);
+            
+            const app = get_saved_apps().find(a => a.name === appName);
+            if(app) run_pipeline_loop(app);
         } else {
             run_app(appName);
         }
@@ -83,8 +90,7 @@ function delete_app(appName) {
         return;
     }
 
-    let saved_apps = get_saved_apps();
-    saved_apps = saved_apps.filter(app => app.name !== appName);
+    let saved_apps = get_saved_apps().filter(app => app.name !== appName);
     localStorage.setItem(app_folder, JSON.stringify(saved_apps));
 
     console.log(`[Engine] Cleared reference storage maps for: ${appName}`);
