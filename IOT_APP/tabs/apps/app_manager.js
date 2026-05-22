@@ -5,9 +5,8 @@ STATE & CONFIGURATION MANAGEMENT
 */
 const app_folder = "saved_apps";
 
-// Tracks active engine threads running in browser memory
-// Map: appName -> {app, running: true, waitingResolvers: Map}
-const runningApps = new Set();
+// FIXED: Changed from new Set() to new Map() so .has(), .set(), and .delete() work correctly
+const runningApps = new Map();
 const waitingOutputs = new Set();
 const pausedApps = new Set();
 
@@ -66,11 +65,15 @@ function toggle_app_state(appName, shouldRun) {
     if (shouldRun) {
         if (pausedApps.has(appName)) {
             pausedApps.delete(appName);
-            runningApps.add(appName);
-            console.log(`[Engine] Resumed application: ${appName}`);
-            
+            // runningApps is now a Map, so we pass the runtime structure or placeholder
+            // For toggle simplicity, run_app handles putting the full runtime object in the map
             const app = get_saved_apps().find(a => a.name === appName);
-            if(app) run_pipeline_loop(app);
+            if(app) {
+                const runtime = { app, running: true, waitingResolvers: new Map() };
+                runningApps.set(appName, runtime);
+                console.log(`[Engine] Resumed application: ${appName}`);
+                if (typeof run_pipeline_loop === 'function') run_pipeline_loop(app);
+            }
         } else {
             run_app(appName);
         }
@@ -183,7 +186,7 @@ async function run_app(appName) {
     }
 
     const runtime = { app, running: true, waitingResolvers: new Map() };
-    runningApps.set(appName, runtime);
+    runningApps.set(appName, runtime); // This works perfectly now that runningApps is a Map!
 
     console.log(`[Engine] Starting processing pipeline chain logic rules for: ${appName}`);
 
@@ -301,6 +304,11 @@ function save_app() {
         if (!confirm(`An application named "${app_name}" already exists. Do you want to overwrite it?`)) {
             console.log(`[Engine] Overwrite cancelled by user.`);
             return;
+        }
+        
+        // FIXED: Kept strictly inside the block so it only kills the execution state on a deliberate overwrite action
+        if (typeof terminate_app === 'function') {
+            terminate_app(app_name);
         }
     }
 
