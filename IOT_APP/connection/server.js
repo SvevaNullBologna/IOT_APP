@@ -65,20 +65,9 @@ function get_langRegistry(thing_id){
 
 /* */
 
+/* parsing */
 
-/* SOCKET LOGIC IMPLEMENTATION */
-
-const localIP = getLocalIP();
-const server = dgram.createSocket({ type: 'udp4', reuseAddr: true });
-
-server.on('error', (err) => {
-    console.log(`Server error:\n${err.stack}`);
-    server.close();
-});
-
-server.on('message', (msg, rinfo) => {
-    const rawContent = msg.toString();
-    
+function parse_atlas_tweet(rawContent){
     // 1. Extract the JSON block Announcing_tweet : { ... } => {...}
     const start = rawContent.lastIndexOf('{');
     const end = rawContent.lastIndexOf('}');
@@ -136,20 +125,45 @@ server.on('message', (msg, rinfo) => {
             }
             
         }
-       
-        // 3. Log the clean version to your console
-        console.log("---------------------------------");
-        console.log(`CLEAN TWEET FROM: ${rinfo.address}`);
-        console.dir(result, { colors: true });
 
-        //saving IN CASE the port and IP 
-        add_langRegistry(result, rinfo);
+        return result;
 
-        // 4. Send the clean object to the browser
-        io.emit('atlas-tweet', result);
     } else {
         console.log("Received malformed or non-JSON data:", rawContent);
+        return null;
     }
+    
+}
+
+/* SOCKET LOGIC IMPLEMENTATION */
+
+const localIP = getLocalIP();
+const server = dgram.createSocket({ type: 'udp4', reuseAddr: true });
+
+server.on('error', (err) => {
+    console.log(`Server error:\n${err.stack}`);
+    server.close();
+});
+
+server.on('message', (msg, rinfo) => {
+    const rawContent = msg.toString();
+    
+    let parsed = parse_atlas_tweet(rawContent);
+
+    if(parsed){
+
+        //saving IN CASE the port and IP 
+        add_langRegistry(parsed, rinfo);
+
+        // Log the clean version to your console
+        console.log("---------------------------------");
+        console.log(`CLEAN TWEET FROM: ${rinfo.address}`);
+        console.dir(parsed, { colors: true });
+
+        // 4. Send the clean object to the browser
+        io.emit('atlas-tweet', parsed);
+    }
+    
 });
 
 server.on('listening', () => {
@@ -218,13 +232,20 @@ io.on('connection', (socket) => {
 
             client.on('data', (data) => {
 
-                const response = data.toString();
+                const response = data.toString().trim();
 
-                console.log('[TCP RESPONSE]');
-                console.log(response);
+                let parsedResponse = parse_atlas_tweet(response);
 
-                // Optional: forward response to browser
-                io.emit('atlas-response', response);
+                if (parsedResponse) {
+                    console.log('[TCP PARSED SUCCESS]');
+                    console.dir(parsedResponse, { colors: true });
+
+                    // Forward the clean structured object to your browser frontend
+                    io.emit('atlas-tweet', parsedResponse); 
+                } else {
+                    // Fallback for debugging if it doesn't match the standard tweet layout
+                    io.emit('atlas-response', response);
+                }
 
                 client.destroy();
             });

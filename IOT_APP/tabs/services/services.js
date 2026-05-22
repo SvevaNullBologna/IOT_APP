@@ -264,6 +264,33 @@ window.handle_run_service = function(buttonElement, encodedPayload) {
     }
 };
 
+function readServiceCallReply(tweet){
+    const thingId = tweet["Thing ID"]
+    const service_name = tweet["Service Name"]
+    const service_status = tweet["Status"]
+    const result = tweet["Service Result"]
+
+    if(!thingId || !service_name || !service_status || !result) return;
+
+    console.log("ReadServiceCallReply called");
+    
+    let service = services.find(service => service.thing_id === thingId && service.service_name === service_name );
+
+    if(!service){
+        console.warn("Service not found for reply:", thingId, service_name);
+    }
+    
+    service.last_result = result; 
+    service.last_status = service.status === "Successful";
+
+    console.log("last_result", service.last_result);
+    console.log("last_status", service.last_status);
+    showServicesLists();
+    
+}
+
+/* DISPLAY ON TAB */
+
 function sortServices(){
     const actuators = services.filter(s => 
         s.type.toLowerCase() === "actuator" || s.type.toLowerCase() === "action"

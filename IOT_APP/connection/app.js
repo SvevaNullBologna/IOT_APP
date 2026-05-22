@@ -115,6 +115,13 @@ function read_atlas_tweet(tweet) {
             });
         }
     }
+    else if(type === "Service call reply"){
+        if (typeof window.readServiceCallReply === 'function') {
+            window.readServiceCallReply(tweet);
+        } else {
+            console.warn("Funzione readServiceCallReply non ancora caricata.");
+        }
+    }
 }
 
 // Avvio automatico al caricamento della pagina
