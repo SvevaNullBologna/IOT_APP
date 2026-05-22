@@ -142,12 +142,27 @@ function save_app() {
     // 2. Scan all nodes currently sitting inside the drop zone to save the service list
     const dropZone = document.getElementById('drop-editor-zone');
     if (dropZone) {
+
         dropZone.querySelectorAll('.canvas-node').forEach(node => {
             try {
                 const payload = node.getAttribute('data-service');
                 if (payload) {
                     const serviceObj = JSON.parse(decodeURIComponent(atob(payload)));
+
                     if (serviceObj && serviceObj.service_name) {
+
+                        // Extract runtime inputs from canvas
+                        const runtimeInputs = get_service_input(node);
+
+                        // Validation block
+                        if (runtimeInputs === null) {
+                            alert(`Invalid inputs for service "${serviceObj.service_name}"`);
+                            return;
+                        }
+
+                        // Attach live runtime inputs
+                        serviceObj.runtime_inputs = runtimeInputs;
+
                         uniqueServicesMap.set(serviceObj.service_name, serviceObj);
                     }
                 }

@@ -46,6 +46,9 @@ function make_relationship(type, nodeA, nodeB, condition = null){
         const serviceA = JSON.parse(decodeURIComponent(atob(nodeA.getAttribute('data-service'))));
         const serviceB = JSON.parse(decodeURIComponent(atob(nodeB.getAttribute('data-service'))));
 
+        const runtimeInputsA = get_service_input(nodeA);
+        const runtimeInputsB = get_service_input(nodeB);
+
         const newRel = {
             id : typeof getID === 'function' ? getID() : Date.now(), 
             nameA: serviceA.service_name,
@@ -53,7 +56,9 @@ function make_relationship(type, nodeA, nodeB, condition = null){
             typeA: serviceA.type,
             typeB: serviceB.type,
             type: type,
-            condition: condition
+            condition: condition,
+            runtime_inputsA: runtimeInputsA,
+            runtime_inputsB: runtimeInputsB
         };
         if (type === CONNECTION_TYPES.ORDER){
             newRel.condition = null;
@@ -100,7 +105,6 @@ function getDraggableServiceCard(service) {
                     <strong> thing ID:</strong>
                     ${service.thing_id}
                 </p>
-                
             </div>
         </div>
     `;
@@ -228,44 +232,71 @@ function getCanvasNodeHTML(service) {
     const inputKeys = Object.keys(service.inputs || {});
     const hasInputs = inputKeys.length > 0;
 
-    // 1. Generate inline input rows for the main body if required
-    let inputsFormHTML = '';
+    // Build Inputs Badges
+    let inputsHTML = '<span style="color: #64748b; font-style: italic;">None</span>';
     if (hasInputs) {
-        inputsFormHTML = `
-            <div class="canvas-node-inputs-block" style="margin-top: 8px; border-top: 1px dashed #334155; padding-top: 6px;">
-                ${inputKeys.map(key => {
-                    const currentRuntimeValue = (service.runtime_inputs && service.runtime_inputs[key]) !== undefined 
-                        ? service.runtime_inputs[key] 
-                        : '';
-                        
-                    return `
-                        <div style="margin-bottom: 4px; text-align: left;">
-                            <label style="font-size: 0.75em; color: #94a3b8; display: block; margin-bottom: 1px;">${key}:</label>
-                            <input type="text" 
-                                   class="canvas-node-input-field" 
-                                   data-input-key="${key}" 
-                                   value="${currentRuntimeValue}"
-                                   placeholder="Value..." 
-                                   onchange="window.handleCanvasInputValueChange(this)"
-                                   onmousedown="event.stopPropagation()"
-                                   style="width: 100%; padding: 4px; background: #0f172a; border: 1px solid #334155; border-radius: 4px; color: #f8fafc; font-size: 0.8em; box-sizing: border-box; outline: none;">
-                        </div>
-                    `;
-                }).join('')}
-            </div>
-        `;
+        inputsHTML = inputKeys.map(key => 
+            `<span style="background: rgba(14, 165, 233, 0.15); color: #38bdf8; padding: 2px 6px; border-radius: 4px; font-size: 0.85em; margin: 2px; display: inline-block;"><strong>${key}:</strong> ${service.inputs[key]}</span>`
+        ).join('');
     }
 
-    // 2. Return the structure with fixed side-by-side positioning for actions
+    // Build Outputs Badges
+    let outputsHTML = '<span style="color: #64748b; font-style: italic;">None</span>';
+    const outputKeys = Object.keys(service.outputs || {});
+    if (outputKeys.length > 0) {
+        outputsHTML = outputKeys.map(key => 
+            `<span style="background: rgba(16, 185, 129, 0.15); color: #34d399; padding: 2px 6px; border-radius: 4px; font-size: 0.85em; margin: 2px; display: inline-block;"><strong>${key}:</strong> ${service.outputs[key]}</span>`
+        ).join('');
+    }
+
+    // Interactive Field Layout Map
+    const inputFieldsHTML = inputKeys.map(key => {
+        const currentRuntimeValue = (service.runtime_inputs && service.runtime_inputs[key]) !== undefined 
+            ? service.runtime_inputs[key] 
+            : '';
+            
+        return `
+            <div style="margin-bottom: 8px; text-align: left;">
+                <label style="display: block; font-size: 0.8em; color: #94a3b8; margin-bottom: 3px; font-weight: 500;">${key} (${service.inputs[key]})</label>
+                <input type="text" 
+                    class="canvas-node-input-field" 
+                    data-input-key="${key}" 
+                    value="${currentRuntimeValue}"
+                    placeholder="Enter value" 
+                    required
+                    onchange="window.handleCanvasInputValueChange(this)"
+                    onmousedown="event.stopPropagation()"
+                    style="width: 100%; padding: 6px; background: #0f172a; border: 1px solid #334155; border-radius: 4px; color: #f8fafc; font-size: 0.85em; box-sizing: border-box; outline: none;">
+            </div>
+        `;
+    }).join('');
+
+
     return `
-        <div class="card-header canvas-node-header">
-            <strong>${service.service_name}</strong>
+        <div style="padding: 12px 12px 6px 12px;">
+            <div class="card-header canvas-node-header" style="margin-bottom: 6px;">
+                <strong style="color: #f8fafc; font-size: 1em; font-weight: 600;">
+                    ${service.service_name}
+                </strong>
+            </div>
+            <div class="card-body" style="color: #cbd5e1; font-size: 0.85em; line-height: 1.4;">
+                <small style="display:block; margin-bottom: 2px;"><strong>Service ID:</strong> ${service.service_id || 'N/A'}</small>
+                <small style="display:block; margin-bottom: 2px;"><strong>Thing ID:</strong> ${service.thing_id || 'N/A'}</small>
+            </div>
         </div>
-        <div class="card-body">
-            <small>thing: ${service.thing_id || service.id || 'N/A'}</small>
-            ${inputsFormHTML}
+
+        <div class="input-config-drawer" style="display: none; padding: 4px 12px 10px 12px; background: #111827; border-top: 1px solid #334155; font-size: 0.85em;">
+            <p style="margin: 6px 0; color: #cbd5e1;"><strong>API Name:</strong> ${service.function_name || "None"}</p>
+            <p style="margin: 4px 0; color: #94a3b8;"><strong>Expected Inputs:</strong> ${inputsHTML}</p>
+            <p style="margin: 4px 0; color: #94a3b8; margin-bottom: 10px;"><strong>Outputs:</strong> ${outputsHTML}</p>
+            ${hasInputs ? `<div class="inputs-form-container" style="border-top: 1px dashed #334155; padding-top: 8px; margin-top: 8px;">${inputFieldsHTML}</div>` : ''}
         </div>
-        <div class="card-foot" style="display: flex; justify-content: flex-end; padding: 6px 0 0 0; width: 100%;">
+
+        <div class="card-foot" style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; border-top: 1px solid #334155; background: #1e293b; margin-top: auto;">
+            <button class="set_input" onclick="window.handle_set_input(this)" title="Toggle Configuration View" 
+                    style="background: #334155; color: #cbd5e1; border: 1px solid #475569; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 0.8em; font-weight: bold; display: flex; align-items: center; justify-content: center; transition: all 0.2s; margin: 0;">
+                ▼
+            </button>
             <div class="node-actions" style="display: flex; flex-direction: row; gap: 6px; width: auto; max-width: none; overflow: visible;">
                 <button class="connect-btn" title="Connect Relationship" style="display: inline-block; margin: 0;">🔗</button>
                 <button class="delete-btn" title="Remove from canvas" style="display: inline-block; margin: 0;">×</button>
@@ -273,6 +304,35 @@ function getCanvasNodeHTML(service) {
         </div>
     `;
 }
+
+/* =====================================================
+INPUT INTERACTION HANDLERS
+===================================================== */
+window.handleCanvasInputValueChange = function(inputElement) {
+    if (inputElement) {
+        inputElement.setAttribute('value', inputElement.value);
+    }
+};
+
+window.handle_set_input = function(buttonElement) {
+    const card = buttonElement.closest('.iot-card');
+    const drawer = card.querySelector('.input-config-drawer');
+    
+    if (drawer) {
+        const isHidden = drawer.style.display === 'none';
+        drawer.style.display = isHidden ? 'block' : 'none';
+        
+        buttonElement.style.background = isHidden ? '#0284c7' : '#334155';
+        buttonElement.style.color = isHidden ? '#ffffff' : '#cbd5e1';
+        buttonElement.style.borderColor = isHidden ? '#0284c7' : '#475569';
+        buttonElement.innerText = isHidden ? '▲' : '▼';
+        
+        // Redraw lines to ensure connection alignment stays fluid during height resize changes
+        if (typeof drawConnections === 'function') {
+            drawConnections();
+        }
+    }
+};
 
 function setupDeleteButton(node) {
     const deleteBtn = node.querySelector('.delete-btn');
@@ -408,7 +468,7 @@ function enableNodeDragging(node) {
     node.addEventListener('mousedown', startDragging);
 
     function startDragging(event) {
-        if (event.target.closest('.node-actions')) return;
+        if (event.target.closest('.node-actions') || event.target.closest('.set_input') || event.target.closest('.canvas-node-input-field')) return;
         
         event.preventDefault();
         mouseX = event.clientX;
@@ -508,7 +568,31 @@ function getNodeCenter(node, zoneRect) {
 /* =====================================================
 CANVAS ACTIONS (SAVE / CLEAR)
 ===================================================== */
+function get_service_input(node){
+    if(!node) return null;
 
+    const inputValues = {};
+    const fields = node.querySelectorAll('.canvas-node-input-field');
+
+    for(const field of fields){
+        const key = field.getAttribute('data-input-key');
+
+        if(!key){
+            return null;
+        }
+
+        const value = field.value.trim();
+
+        // Optional validation
+        if(value === ''){
+            return null;
+        }
+
+        inputValues[key] = value;
+    }
+
+    return inputValues;
+}
 
 function submit_relationships() {
     if (relationshipState.connections.length === 0) {
@@ -518,12 +602,7 @@ function submit_relationships() {
 
     if (typeof relationships !== 'undefined') {
         relationshipState.connections.forEach(conn => {
-            const newRel = make_relationship(
-                conn.type, 
-                conn.from, 
-                conn.to, 
-                conn.condition
-            );
+            const newRel = make_relationship(conn.type, conn.from, conn.to, conn.condition);
 
             if (newRel) {
                 relationships.push(newRel);
@@ -534,7 +613,9 @@ function submit_relationships() {
         console.error("Global 'relationships' array not found.");
     }
 
-    execute_canvas_reset();
+    if (typeof execute_canvas_reset === 'function') {
+        execute_canvas_reset();
+    }
 
     const zone = document.getElementById('drop-editor-zone');
     if (zone) {
@@ -574,7 +655,6 @@ function show_application(app) {
 
     console.log(`[Canvas Engine] Rendering app topology for: "${app.name}"`);
 
-    // 1. CLEAR WORKSPACE CANVAS CLEANLY
     const zone = document.getElementById('drop-editor-zone');
     if (zone) {
         zone.querySelectorAll('.canvas-node').forEach(node => node.remove());
@@ -582,16 +662,13 @@ function show_application(app) {
     relationshipState.connections = [];
     relationshipState.spawnCounter = 0;
 
-    // 2. SYNCHRONIZE HEAD TITLE FIELD TEXT INPUT
     const nameInput = document.getElementById("app_name");
     if (nameInput) {
         nameInput.value = app.name;
     }
 
-    // This tracking dictionary maps a service name string to its actual DOM Node reference
     const createdNodesMap = {};
     
-    // Grid configuration geometry to spread elements logically across the editor zone canvas
     const originX = 120;
     const originY = 120;
     const columnSpacing = 240;
@@ -599,10 +676,8 @@ function show_application(app) {
     const maxColumns = 3;
     let gridIndex = 0;
 
-    // 3. EXTRACT AND COLLECT DISTINCT SERVICE DEFINITIONS
     const uniqueServices = new Map();
 
-    // Collect from the services array backup block first
     if (app.services && Array.isArray(app.services)) {
         app.services.forEach(service => {
             const sName = service.service_name || service.name;
@@ -612,7 +687,6 @@ function show_application(app) {
         });
     }
 
-    // Cross-verify with relationship structures to ensure zero orphans are missed
     if (app.relationships && Array.isArray(app.relationships)) {
         app.relationships.forEach(rel => {
             if (!uniqueServices.has(rel.nameA)) {
@@ -624,37 +698,29 @@ function show_application(app) {
         });
     }
 
-    // 4. GENERATE AND ATTACH VISUAL HTML CARD NODES
     uniqueServices.forEach((serviceInfo) => {
-        // Compute position index coordinates dynamically
         const posX = originX + (gridIndex % maxColumns) * columnSpacing;
         const posY = originY + Math.floor(gridIndex / maxColumns) * rowSpacing;
 
-        // Build the physical DOM structural node object using your asset generation suite
         const node = buildCanvasNode(serviceInfo, posX, posY);
         
-        // Wire back interactive listener capabilities exactly like live drops
         setupDeleteButton(node);
         setupConnectionButton(node);
         enableNodeDragging(node);
 
         if (zone && node) {
             zone.appendChild(node);
-            
-            // Critical Step: Store reference handle linked by service name identifier text
             createdNodesMap[serviceInfo.service_name] = node;
         }
         gridIndex++;
     });
 
-    // 5. RESTORE INTER-NODE RELATIONSHIP PATH LINKS
     if (app.relationships && Array.isArray(app.relationships)) {
         app.relationships.forEach(rel => {
             const sourceNode = createdNodesMap[rel.nameA];
             const targetNode = createdNodesMap[rel.nameB];
 
             if (sourceNode && targetNode) {
-                // Register tracking record to core layout pipeline engine
                 relationshipState.connections.push({
                     from: sourceNode,
                     to: targetNode,
@@ -667,16 +733,15 @@ function show_application(app) {
         });
     }
 
-    // 6. RENDER CONNECTION SPLINES ON SVG LAYER
     drawConnections();
     console.log(`[Canvas Engine] Render complete. Loaded ${gridIndex} nodes and ${relationshipState.connections.length} connections.`);
 }
 
 /* =====================================================
-GLOBAL EXPORT (Make sure show_application is here!)
+GLOBAL EXPORT
 ===================================================== */
 window.renderDraggableServicesList = renderDraggableServicesList;
 window.initDropZone = initDropZone;
 window.onServiceDragStart = onServiceDragStart;
 window.clearConnectionPaths = clearConnectionPaths;
-window.show_application = show_application; // <-- THIS EXPORTS IT GLOBALLY
+window.show_application = show_application;
