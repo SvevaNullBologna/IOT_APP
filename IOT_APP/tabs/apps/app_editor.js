@@ -280,7 +280,6 @@ function getCanvasNodeHTML(service) {
                 </strong>
             </div>
             <div class="card-body" style="color: #cbd5e1; font-size: 0.85em; line-height: 1.4;">
-                <small style="display:block; margin-bottom: 2px;"><strong>Service ID:</strong> ${service.service_id || 'N/A'}</small>
                 <small style="display:block; margin-bottom: 2px;"><strong>Thing ID:</strong> ${service.thing_id || 'N/A'}</small>
             </div>
         </div>
@@ -361,6 +360,10 @@ function setupConnectionButton(node) {
 function stopEvent(event) {
     event.stopPropagation();
 }
+
+/* ======================================================
+BUTTONS ON NODES HANDLERS
+========================================================= */
 
 async function handleNodeConnectionClick(targetNode) {
     if (!relationshipState.connectionSource) {
@@ -592,41 +595,6 @@ function get_service_input(node){
     }
 
     return inputValues;
-}
-
-function submit_relationships() {
-    if (relationshipState.connections.length === 0) {
-        console.warn("No new connections to submit.");
-        return;
-    }
-
-    if (typeof relationships !== 'undefined') {
-        relationshipState.connections.forEach(conn => {
-            const newRel = make_relationship(conn.type, conn.from, conn.to, conn.condition);
-
-            if (newRel) {
-                relationships.push(newRel);
-            }
-        });
-        console.log("Relationships saved to global state.");
-    } else {
-        console.error("Global 'relationships' array not found.");
-    }
-
-    if (typeof execute_canvas_reset === 'function') {
-        execute_canvas_reset();
-    }
-
-    const zone = document.getElementById('drop-editor-zone');
-    if (zone) {
-        zone.querySelectorAll('.canvas-node').forEach(node => node.remove());
-    }
-    
-    relationshipState.connections = [];
-    relationshipState.spawnCounter = 0;
-    drawConnections();
-
-    if(document.getElementById('app_name')) document.getElementById('app_name').value = '';
 }
 
 function clear_canvas() {

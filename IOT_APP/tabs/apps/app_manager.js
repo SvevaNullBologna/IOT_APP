@@ -18,9 +18,6 @@ function get_saved_apps(){
     return data ? JSON.parse(data) : [];
 }
 
-function isValidAppName(name) {
-    return /^[a-zA-Z0-9_-]{1,20}$/.test(name);
-}
 
 /*
 ===========================================
@@ -103,93 +100,241 @@ function pause_app(app_name){
 SAVE TRANSACTION METHOD
 ===========================================
 */
-function save_app() {
-    const app_name_element = document.getElementById('app_name');
-    if (!app_name_element) return;
 
-    const app_name = app_name_element.value.trim();
-    if (!isValidAppName(app_name)) {
-        alert("app name not valid");
-        return;
+
+
+////////////////////////////////////////////
+//////////// VALIDATION 
+
+function isValidAppName(name) {
+    return /^[a-zA-Z0-9_-]{1,20}$/.test(name);
+}
+
+function hasValidNodes(nodes){
+
+    if(nodes.length <= 0){
+        return false;
     }
 
-    let saved_apps = get_saved_apps();
-    const existingIndex = saved_apps.findIndex(app => app.name === app_name);
+    for(const node of nodes){
 
-    if (existingIndex !== -1) {
-        if (!confirm(`An application named "${app_name}" already exists. Do you want to overwrite it?`)) {
-            console.log(`[Engine] Overwrite cancelled by user.`);
-            return; 
+        const payload = node.getAttribute('data-service');
+
+        if(!payload){
+            return false;
+        }
+
+        try{
+
+            const serviceObj = JSON.parse(
+                decodeURIComponent(atob(payload))
+            );
+
+            if(!serviceObj || !serviceObj.service_name){
+                return false;
+            }
+
+            // validate runtime inputs
+            const runtimeInputs = get_service_input(node);
+
+            if(runtimeInputs === null){
+                return false;
+            }
+
+        }catch(e){
+            console.error("Invalid node", e);
+            return false;
         }
     }
 
-    // --- FIX: Extract live relationships and services directly from the active canvas state ---
+    return true;
+}
+
+function hasValidConnections(nodes, connections){
+
+    if(connections.length <= 0){
+        return false;
+    }
+
+    for(const node of nodes){
+
+        const connected = connections.some(conn =>
+            conn.from === node || conn.to === node
+        );
+
+        if(!connected){
+            return false;
+        }
+    }
+
+    return true;
+}
+
+function validate_app(app_name, nodes, connections){
+
+    if(!isValidAppName(app_name)){
+        return {
+            valid: false,
+            message: "Invalid app name."
+        };
+    }
+
+    if(!hasValidNodes(nodes)){
+        return {
+            valid: false,
+            message: "Some nodes contain invalid inputs."
+        };
+    }
+
+    if(!hasValidConnections(nodes, connections)){
+        return {
+            valid: false,
+            message: "Some services are not connected."
+        };
+    }
+
+    return {
+        valid: true
+    };
+}
+
+function save_app() {
+
+    const app_name_element = document.getElementById('app_name');
+
+    if(!app_name_element){
+        return;
+    }
+
+    const app_name = app_name_element.value.trim();
+
+    const dropZone = document.getElementById('drop-editor-zone');
+
+    if(!dropZone){
+        return;
+    }
+
+    const nodes = Array.from(
+        dropZone.querySelectorAll('.canvas-node')
+    );
+
+    // VALIDATION
+    const validation = validate_app(
+        app_name,
+        nodes,
+        relationshipState.connections
+    );
+
+    if(!validation.valid){
+        alert(validation.message);
+        return;
+    }
+
+    // STORAGE STATE
+    let saved_apps = get_saved_apps();
+
+    const existingIndex = saved_apps.findIndex(
+        app => app.name === app_name
+    );
+
+    // OVERWRITE CONFIRM
+    if (existingIndex !== -1) {
+
+        if (!confirm(
+            `An application named "${app_name}" already exists. Do you want to overwrite it?`
+        )) {
+
+            console.log(`[Engine] Overwrite cancelled by user.`);
+            return;
+        }
+    }
+
+    // BUILD RELATIONSHIPS
     const generatedRelationships = [];
+
+    relationshipState.connections.forEach(conn => {
+
+        const cleanRel = make_relationship(
+            conn.type,
+            conn.from,
+            conn.to,
+            conn.condition
+        );
+
+        if(cleanRel){
+            generatedRelationships.push(cleanRel);
+        }
+    });
+
+    // BUILD SERVICES
     const uniqueServicesMap = new Map();
 
-    // 1. Check if the editor state exists
-    if (typeof relationshipState !== 'undefined' && Array.isArray(relationshipState.connections)) {
-        relationshipState.connections.forEach(conn => {
-            if (typeof make_relationship === 'function') {
-                const cleanRel = make_relationship(conn.type, conn.from, conn.to, conn.condition);
-                if (cleanRel) {
-                    generatedRelationships.push(cleanRel);
-                }
+    nodes.forEach(node => {
+
+        try{
+
+            const payload = node.getAttribute('data-service');
+
+            if(!payload){
+                return;
             }
-        });
-    }
 
-    // 2. Scan all nodes currently sitting inside the drop zone to save the service list
-    const dropZone = document.getElementById('drop-editor-zone');
-    if (dropZone) {
+            const serviceObj = JSON.parse(
+                decodeURIComponent(atob(payload))
+            );
 
-        dropZone.querySelectorAll('.canvas-node').forEach(node => {
-            try {
-                const payload = node.getAttribute('data-service');
-                if (payload) {
-                    const serviceObj = JSON.parse(decodeURIComponent(atob(payload)));
+            if(serviceObj && serviceObj.service_name){
 
-                    if (serviceObj && serviceObj.service_name) {
+                serviceObj.runtime_inputs =
+                    get_service_input(node);
 
-                        // Extract runtime inputs from canvas
-                        const runtimeInputs = get_service_input(node);
-
-                        // Validation block
-                        if (runtimeInputs === null) {
-                            alert(`Invalid inputs for service "${serviceObj.service_name}"`);
-                            return;
-                        }
-
-                        // Attach live runtime inputs
-                        serviceObj.runtime_inputs = runtimeInputs;
-
-                        uniqueServicesMap.set(serviceObj.service_name, serviceObj);
-                    }
-                }
-            } catch (e) {
-                console.error("Error collecting canvas node data for saving:", e);
+                uniqueServicesMap.set(
+                    serviceObj.service_name,
+                    serviceObj
+                );
             }
-        });
-    }
 
+        }catch(e){
+            console.error(
+                "Error collecting canvas node data",
+                e
+            );
+        }
+    });
+
+    // FINAL APP OBJECT
     const new_app = {
         name: app_name,
         relationships: generatedRelationships,
         services: Array.from(uniqueServicesMap.values())
     };
 
-    if (existingIndex !== -1) {
+    // SAVE
+    if(existingIndex !== -1){
+
         saved_apps[existingIndex] = new_app;
-        console.log(`[Engine] Application "${app_name}" updated successfully.`);
-    } else {
+
+        console.log(
+            `[Engine] Application "${app_name}" updated successfully.`
+        );
+
+    }else{
+
         saved_apps.push(new_app);
-        console.log(`[Engine] Application "${app_name}" saved successfully.`);
+
+        console.log(
+            `[Engine] Application "${app_name}" saved successfully.`
+        );
     }
 
-    localStorage.setItem(app_folder, JSON.stringify(saved_apps));
+    localStorage.setItem(
+        app_folder,
+        JSON.stringify(saved_apps)
+    );
+
     alert(`App "${app_name}" saved successfully!`);
 
-    if (typeof renderAppsList === 'function') {
+    if(typeof renderAppsList === 'function'){
         renderAppsList();
     }
 }
