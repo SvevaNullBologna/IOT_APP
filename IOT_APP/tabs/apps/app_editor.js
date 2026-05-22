@@ -224,24 +224,23 @@ function setNodePosition(node, x, y) {
     node.style.top = `${y}px`;
 }
 
-// Replace this function in app_editor.js
 function getCanvasNodeHTML(service) {
     const inputKeys = Object.keys(service.inputs || {});
     const hasInputs = inputKeys.length > 0;
 
+    // 1. Generate inline input rows for the main body if required
     let inputsFormHTML = '';
     if (hasInputs) {
         inputsFormHTML = `
             <div class="canvas-node-inputs-block" style="margin-top: 8px; border-top: 1px dashed #334155; padding-top: 6px;">
                 ${inputKeys.map(key => {
-                    // Pull the already configured runtime value if reloading a saved app architecture
                     const currentRuntimeValue = (service.runtime_inputs && service.runtime_inputs[key]) !== undefined 
                         ? service.runtime_inputs[key] 
                         : '';
                         
                     return `
                         <div style="margin-bottom: 4px; text-align: left;">
-                            <label style="font-size: 0.75em; color: #94a3b8; display:block; margin-bottom:1px;">${key}:</label>
+                            <label style="font-size: 0.75em; color: #94a3b8; display: block; margin-bottom: 1px;">${key}:</label>
                             <input type="text" 
                                    class="canvas-node-input-field" 
                                    data-input-key="${key}" 
@@ -257,17 +256,20 @@ function getCanvasNodeHTML(service) {
         `;
     }
 
+    // 2. Return the structure with fixed side-by-side positioning for actions
     return `
-        <div class="card-header canvas-node-header" style="padding-bottom: 2px;">
+        <div class="card-header canvas-node-header">
             <strong>${service.service_name}</strong>
-            <div class="node-actions">
-                <button class="connect-btn" title="Connect Relationship">🔗</button>
-                <button class="delete-btn" title="Remove from canvas">×</button>
-            </div>
         </div>
-        <div class="card-body" style="padding-top: 2px;">
-            <small style="color: #64748b; display: block; margin-bottom: 2px;">ID: ${service.thing_id || service.id || 'N/A'}</small>
+        <div class="card-body">
+            <small>thing: ${service.thing_id || service.id || 'N/A'}</small>
             ${inputsFormHTML}
+        </div>
+        <div class="card-foot" style="display: flex; justify-content: flex-end; padding: 6px 0 0 0; width: 100%;">
+            <div class="node-actions" style="display: flex; flex-direction: row; gap: 6px; width: auto; max-width: none; overflow: visible;">
+                <button class="connect-btn" title="Connect Relationship" style="display: inline-block; margin: 0;">🔗</button>
+                <button class="delete-btn" title="Remove from canvas" style="display: inline-block; margin: 0;">×</button>
+            </div>
         </div>
     `;
 }
