@@ -304,6 +304,25 @@ function readServiceCallReply(tweet){
     console.log("last_result", service.last_result);
     console.log("last_status", service.last_status);
     showServicesLists();
+
+
+    const trackingKey =`${thingId}:${service_name}`;
+
+    for (const [appName, runtime] of runningApps.entries()) {
+        if (runtime.waitingResolvers && runtime.waitingResolvers.has(trackingKey)) {
+            console.log(`[Engine] Matching service reply routed to application: ${appName}`);
+            
+            // Extract the pending promise handler
+            const resolver = runtime.waitingResolvers.get(trackingKey);
+            runtime.waitingResolvers.delete(trackingKey); // Clear out slot immediately
+
+            // Deliver the outcome payload directly into the awaiting execution pipeline step
+            resolver({
+                status: service_status,
+                result: result
+            });
+        }
+    }
     
 }
 

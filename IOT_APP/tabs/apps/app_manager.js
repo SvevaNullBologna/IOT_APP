@@ -6,6 +6,7 @@ STATE & CONFIGURATION MANAGEMENT
 const app_folder = "saved_apps";
 
 // Tracks active engine threads running in browser memory
+// Map: appName -> {app, running: true, waitingResolvers: Map}
 const runningApps = new Map();
 
 /*
@@ -18,323 +19,331 @@ function get_saved_apps(){
     return data ? JSON.parse(data) : [];
 }
 
-
 /*
 ===========================================
 APPLICATION LIFECYCLE & ENGINE MANAGEMENT
 ===========================================
 */
 function isAppRunning(appName) {
-    return runningApps.has(appName);
+    if (!runningApps.has(appName)) return false;
+    return runningApps.get(appName).running === true;
+}
+
+function pause_app(appName) {
+    if (runningApps.has(appName)) {
+        const runtime = runningApps.get(appName);
+        runtime.running = false;
+        console.log(`[Engine] Application paused: ${appName}`);
+    }
+    if (typeof renderAppsList === 'function') {
+        renderAppsList();
+    }
+}
+
+function terminate_app(appName) {
+    if (runningApps.has(appName)) {
+        const runtime = runningApps.get(appName);
+        runtime.running = false;
+        // Reject all outstanding event loops to clear memory leaks
+        if (runtime.waitingResolvers) {
+            runtime.waitingResolvers.clear();
+        }
+        runningApps.delete(appName);
+        console.log(`[Engine] Application terminated: ${appName}`);
+    }
+    if (typeof renderAppsList === 'function') {
+        renderAppsList();
+    }
 }
 
 function toggle_app_state(appName, shouldRun) {
     if (shouldRun) {
-        runningApps.add(appName);
-        console.log(`[Engine] Running application pipeline: ${appName}`);
-        // Insert custom instrumentation trigger paths here
+        if (runningApps.has(appName)) {
+            const runtime = runningApps.get(appName);
+            if (!runtime.running) {
+                runtime.running = true;
+                console.log(`[Engine] Resumed application: ${appName}`);
+            }
+        } else {
+            run_app(appName);
+        }
     } else {
-        runningApps.delete(appName);
-        console.log(`[Engine] Application thread halted: ${appName}`);
-        // Insert clean teardown commands here
+        pause_app(appName);
     }
 
-    // Direct cross-file hook update to match graphic button states
     if (typeof renderAppsList === 'function') {
         renderAppsList();
     }
 }
 
 function delete_app(appName) {
-    pause_app(appName);
+    terminate_app(appName);
 
     if (!confirm(`Are you sure you want to completely delete "${appName}"?`)) {
         return;
     }
 
     let saved_apps = get_saved_apps();
-    // Exclude application from file list array matches
     saved_apps = saved_apps.filter(app => app.name !== appName);
-    
-    // Synchronize to physical local text database layout block
     localStorage.setItem(app_folder, JSON.stringify(saved_apps));
-    
-    // Erase structural references out of active memory tables
-    runningApps.delete(appName);
 
     console.log(`[Engine] Cleared reference storage maps for: ${appName}`);
 
-    // Update frontend interfaces automatically
     if (typeof renderAppsList === 'function') {
         renderAppsList();
     }
 }
 
+/* ===================================
+DYNAMIC PIPELINE EXECUTION CODE
+======================================
+*/
 
+/**
+ * Executes a service using the event-driven async pattern setup in readServiceCallReply
+ */
+async function execute_service(runtime, service) {
+    return new Promise((resolve, reject) => {
+        if (!runtime.running) return reject(new Error("App Paused or Terminated"));
 
-function run_app(appName){
-    if(isAppRunning(appName)){
+        try {
+            // 1. Create a tracking key matching readServiceCallReply pattern
+            const trackingKey = `${service.thing_id}:${service.service_name}`;
+            
+            // 2. Queue up the resolver token into the application runtime context map
+            runtime.waitingResolvers.set(trackingKey, resolve);
+
+            // 3. Fire off the actual native hardware command sequence
+            const result = window.atlas.callService(
+                service.thing_id, 
+                service.service_name, 
+                service.runtime_inputs || []
+            );
+            
+            // Edge-case: Handle local mocked promises or fast local returns
+            if (result instanceof Promise) {
+                result.then((res) => {
+                    runtime.waitingResolvers.delete(trackingKey);
+                    resolve(res);
+                }).catch((err) => {
+                    runtime.waitingResolvers.delete(trackingKey);
+                    reject(err);
+                });
+            }
+        } catch (e) {
+            reject(e);
+        }
+    });
+}
+
+/**
+ * Safely evaluates dynamic string constraints like "value > 10 && value < 50"
+ */
+function evaluate_condition(condition, result) {
+    if (!condition || condition.trim() === "" || condition.toUpperCase() === "NULL") {
+        return true; 
+    }
+    
+    try {
+        // Prepare scope data environment variables for parsing context execution safely
+        let value = isNaN(result) ? result : Number(result);
+
+        // Sanitize out malicious attempts while keeping functional runtime clean
+        const safeCondition = condition.replace(/[^a-zA-Z0-9\s><=&|!().+-]/g, '');
+        
+        // Dynamic conditional evaluator function execution execution engine block
+        return new Function('value', `return ${safeCondition};`)(value);
+    } catch(err) {
+        console.error("[Engine] Condition evaluation parsing structural break syntax flaw:", err);
+        return false;
+    }
+}
+
+/**
+ * Runs the application pipeline structurally looping connections
+ */
+async function run_app(appName) {
+    if (isAppRunning(appName)) {
         console.log(`${appName} is already running`);
         return;
     }
 
-    apps = get_saved_apps();
+    const apps = get_saved_apps();
+    const app = apps.find(a => a.name === appName);
 
-
-
-    if (window.atlas && typeof window.atlas.callService === 'function') {
-            window.atlas.callService(thingId, serviceName, values);
-            
+    if (!app) {
+        console.error(`[Engine] Application entity definition missing matching target context: ${appName}`);
+        return;
     }
 
-    //to get feedback, get the field : Service Result
+    const runtime = { app, running: true, waitingResolvers: new Map() };
+    runningApps.set(appName, runtime);
 
-}
+    console.log(`[Engine] Starting processing pipeline chain logic rules for: ${appName}`);
 
-function pause_app(app_name){
+    try {
+        // Iterate sequentially through connections structural workflow rulesets
+        for (const relationship of app.relationships) {
+            if (!runtime.running) break;
 
+            // Find origin node service metadata state parameters configuration data
+            const sourceService = app.services.find(s => s.service_name === relationship.nodeA);
+            if (!sourceService) continue;
+
+            console.log(`[Engine] Processing Node Step: Calling ${sourceService.service_name}...`);
+            
+            // Await hardware response gracefully using your newly generated promise layer
+            const responsePayload = await execute_service(runtime, sourceService);
+
+            // Process rule criteria evaluation
+            const conditionPassed = evaluate_condition(relationship.condition, responsePayload.result);
+            console.log(`[Engine] Rule Matrix Check [${relationship.condition}] against result (${responsePayload.result}) passed:`, conditionPassed);
+
+            if (!conditionPassed) {
+                console.log(`[Engine] Condition failed. Terminating step processing thread down this layout tree branch.`);
+                continue; 
+            }
+
+            // Target Node Resolution Block Execution Step
+            const targetService = app.services.find(s => s.service_name === relationship.nodeB);
+            if (targetService) {
+                console.log(`[Engine] Pipeline connection routing firing linked target operation: ${targetService.service_name}`);
+                await execute_service(runtime, targetService);
+            }
+        }
+    } catch (error) {
+        console.error(`[Engine] Active dynamic execution pipeline encountered runtime exception error loop:`, error);
+    }
 }
 
 /*
 ===========================================
-SAVE TRANSACTION METHOD
+SAVE TRANSACTION METHOD & VALIDATION
 ===========================================
 */
-
-
-
-////////////////////////////////////////////
-//////////// VALIDATION 
-
 function isValidAppName(name) {
     return /^[a-zA-Z0-9_-]{1,20}$/.test(name);
 }
 
-function hasValidNodes(nodes){
+function hasValidNodes(nodes) {
+    if (nodes.length <= 0) return false;
 
-    if(nodes.length <= 0){
-        return false;
-    }
-
-    for(const node of nodes){
-
+    for (const node of nodes) {
         const payload = node.getAttribute('data-service');
+        if (!payload) return false;
 
-        if(!payload){
-            return false;
-        }
+        try {
+            const serviceObj = JSON.parse(decodeURIComponent(atob(payload)));
+            if (!serviceObj || !serviceObj.service_name) return false;
 
-        try{
-
-            const serviceObj = JSON.parse(
-                decodeURIComponent(atob(payload))
-            );
-
-            if(!serviceObj || !serviceObj.service_name){
-                return false;
+            if (typeof get_service_input === 'function') {
+                const runtimeInputs = get_service_input(node);
+                if (runtimeInputs === null) return false;
             }
-
-            // validate runtime inputs
-            const runtimeInputs = get_service_input(node);
-
-            if(runtimeInputs === null){
-                return false;
-            }
-
-        }catch(e){
-            console.error("Invalid node", e);
+        } catch (e) {
+            console.error("Invalid node context object processing configuration structural mapping", e);
             return false;
         }
     }
-
     return true;
 }
 
-function hasValidConnections(nodes, connections){
+function hasValidConnections(nodes, connections) {
+    if (!connections || connections.length <= 0) return false;
 
-    if(connections.length <= 0){
-        return false;
+    for (const node of nodes) {
+        const connected = connections.some(conn => conn.from === node || conn.to === node);
+        if (!connected) return false;
     }
-
-    for(const node of nodes){
-
-        const connected = connections.some(conn =>
-            conn.from === node || conn.to === node
-        );
-
-        if(!connected){
-            return false;
-        }
-    }
-
     return true;
 }
 
-function validate_app(app_name, nodes, connections){
-
-    if(!isValidAppName(app_name)){
-        return {
-            valid: false,
-            message: "Invalid app name."
-        };
+function validate_app(app_name, nodes, connections) {
+    if (!isValidAppName(app_name)) {
+        return { valid: false, message: "Invalid app name. Use 1-20 alphanumeric characters, dashes, or underscores." };
     }
-
-    if(!hasValidNodes(nodes)){
-        return {
-            valid: false,
-            message: "Some nodes contain invalid inputs."
-        };
+    if (!hasValidNodes(nodes)) {
+        return { valid: false, message: "Some components on the map contain missing or invalid arguments." };
     }
-
-    if(!hasValidConnections(nodes, connections)){
-        return {
-            valid: false,
-            message: "Some services are not connected."
-        };
+    if (!hasValidConnections(nodes, connections)) {
+        return { valid: false, message: "Isolated components found! Ensure every canvas element is completely wired up." };
     }
-
-    return {
-        valid: true
-    };
+    return { valid: true };
 }
 
 function save_app() {
-
     const app_name_element = document.getElementById('app_name');
-
-    if(!app_name_element){
-        return;
-    }
-
+    if (!app_name_element) return;
     const app_name = app_name_element.value.trim();
 
     const dropZone = document.getElementById('drop-editor-zone');
+    if (!dropZone) return;
 
-    if(!dropZone){
-        return;
-    }
+    const nodes = Array.from(dropZone.querySelectorAll('.canvas-node'));
+    const currentConnections = (typeof relationshipState !== 'undefined' && relationshipState.connections) ? relationshipState.connections : [];
 
-    const nodes = Array.from(
-        dropZone.querySelectorAll('.canvas-node')
-    );
-
-    // VALIDATION
-    const validation = validate_app(
-        app_name,
-        nodes,
-        relationshipState.connections
-    );
-
-    if(!validation.valid){
+    const validation = validate_app(app_name, nodes, currentConnections);
+    if (!validation.valid) {
         alert(validation.message);
         return;
     }
 
-    // STORAGE STATE
     let saved_apps = get_saved_apps();
+    const existingIndex = saved_apps.findIndex(app => app.name === app_name);
 
-    const existingIndex = saved_apps.findIndex(
-        app => app.name === app_name
-    );
-
-    // OVERWRITE CONFIRM
     if (existingIndex !== -1) {
-
-        if (!confirm(
-            `An application named "${app_name}" already exists. Do you want to overwrite it?`
-        )) {
-
+        if (!confirm(`An application named "${app_name}" already exists. Do you want to overwrite it?`)) {
             console.log(`[Engine] Overwrite cancelled by user.`);
             return;
         }
     }
 
-    // BUILD RELATIONSHIPS
     const generatedRelationships = [];
-
-    relationshipState.connections.forEach(conn => {
-
-        const cleanRel = make_relationship(
-            conn.type,
-            conn.from,
-            conn.to,
-            conn.condition
-        );
-
-        if(cleanRel){
-            generatedRelationships.push(cleanRel);
+    currentConnections.forEach(conn => {
+        if (typeof make_relationship === 'function') {
+            const cleanRel = make_relationship(conn.type, conn.from, conn.to, conn.condition);
+            if (cleanRel) generatedRelationships.push(cleanRel);
         }
     });
 
-    // BUILD SERVICES
     const uniqueServicesMap = new Map();
-
     nodes.forEach(node => {
-
-        try{
-
+        try {
             const payload = node.getAttribute('data-service');
+            if (!payload) return;
 
-            if(!payload){
-                return;
+            const serviceObj = JSON.parse(decodeURIComponent(atob(payload)));
+            if (serviceObj && serviceObj.service_name) {
+                if (typeof get_service_input === 'function') {
+                    serviceObj.runtime_inputs = get_service_input(node);
+                } else {
+                    serviceObj.runtime_inputs = [];
+                }
+                uniqueServicesMap.set(serviceObj.service_name, serviceObj);
             }
-
-            const serviceObj = JSON.parse(
-                decodeURIComponent(atob(payload))
-            );
-
-            if(serviceObj && serviceObj.service_name){
-
-                serviceObj.runtime_inputs =
-                    get_service_input(node);
-
-                uniqueServicesMap.set(
-                    serviceObj.service_name,
-                    serviceObj
-                );
-            }
-
-        }catch(e){
-            console.error(
-                "Error collecting canvas node data",
-                e
-            );
+        } catch (e) {
+            console.error("Error collecting canvas node data details:", e);
         }
     });
 
-    // FINAL APP OBJECT
     const new_app = {
         name: app_name,
         relationships: generatedRelationships,
         services: Array.from(uniqueServicesMap.values())
     };
 
-    // SAVE
-    if(existingIndex !== -1){
-
+    if (existingIndex !== -1) {
         saved_apps[existingIndex] = new_app;
-
-        console.log(
-            `[Engine] Application "${app_name}" updated successfully.`
-        );
-
-    }else{
-
+        console.log(`[Engine] Application "${app_name}" updated successfully.`);
+    } else {
         saved_apps.push(new_app);
-
-        console.log(
-            `[Engine] Application "${app_name}" saved successfully.`
-        );
+        console.log(`[Engine] Application "${app_name}" saved successfully.`);
     }
 
-    localStorage.setItem(
-        app_folder,
-        JSON.stringify(saved_apps)
-    );
-
+    localStorage.setItem(app_folder, JSON.stringify(saved_apps));
     alert(`App "${app_name}" saved successfully!`);
 
-    if(typeof renderAppsList === 'function'){
+    if (typeof renderAppsList === 'function') {
         renderAppsList();
     }
 }
