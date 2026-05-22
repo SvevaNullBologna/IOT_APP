@@ -68,18 +68,8 @@ function get_langRegistry(thing_id) {
 
 /* parsing */
 
-const localIP = getLocalIP();
-const server = dgram.createSocket({ type: 'udp4', reuseAddr: true });
 
-server.on('error', (err) => {
-    console.log(`Server error:\n${err.stack}`);
-    server.close();
-});
-
-server.on('message', (msg, rinfo) => {
-    const rawContent = msg.toString();
-
-    // 1. Extract the JSON block Announcing_tweet : { ... } => {...}
+function parse_atlas_tweet(rawContent){
     const start = rawContent.lastIndexOf('{');
     const end = rawContent.lastIndexOf('}');
 
@@ -137,6 +127,33 @@ server.on('message', (msg, rinfo) => {
 
         }
 
+        return result;
+    }
+    console.log("Received malformed or non-JSON data:", rawContent);
+    return null;
+        
+}
+
+/* SOCKET LOGIC IMPLEMENTATION */
+
+const localIP = getLocalIP();
+const server = dgram.createSocket({ type: 'udp4', reuseAddr: true });
+
+server.on('error', (err) => {
+    console.log(`Server error:\n${err.stack}`);
+    server.close();
+});
+
+server.on('message', (msg, rinfo) => {
+    const rawContent = msg.toString();
+
+    // 1. Extract the JSON block Announcing_tweet : { ... } => {...}
+
+    let parsed = parse_atlas_tweet(rawContent);
+    if(parsed){
+        add_langRegistry(parsed, rinfo);
+
+
         // 3. Log the clean version to your console
         console.log("---------------------------------");
         console.log(`CLEAN TWEET FROM: ${rinfo.address}`);
@@ -145,7 +162,7 @@ server.on('message', (msg, rinfo) => {
         // 4. Send the clean object to the browser
         io.emit('atlas-tweet', parsed);
     }
-
+        
 });
 
 server.on('listening', () => {
