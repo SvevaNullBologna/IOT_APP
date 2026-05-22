@@ -224,17 +224,50 @@ function setNodePosition(node, x, y) {
     node.style.top = `${y}px`;
 }
 
+// Replace this function in app_editor.js
 function getCanvasNodeHTML(service) {
+    const inputKeys = Object.keys(service.inputs || {});
+    const hasInputs = inputKeys.length > 0;
+
+    let inputsFormHTML = '';
+    if (hasInputs) {
+        inputsFormHTML = `
+            <div class="canvas-node-inputs-block" style="margin-top: 8px; border-top: 1px dashed #334155; padding-top: 6px;">
+                ${inputKeys.map(key => {
+                    // Pull the already configured runtime value if reloading a saved app architecture
+                    const currentRuntimeValue = (service.runtime_inputs && service.runtime_inputs[key]) !== undefined 
+                        ? service.runtime_inputs[key] 
+                        : '';
+                        
+                    return `
+                        <div style="margin-bottom: 4px; text-align: left;">
+                            <label style="font-size: 0.75em; color: #94a3b8; display:block; margin-bottom:1px;">${key}:</label>
+                            <input type="text" 
+                                   class="canvas-node-input-field" 
+                                   data-input-key="${key}" 
+                                   value="${currentRuntimeValue}"
+                                   placeholder="Value..." 
+                                   onchange="window.handleCanvasInputValueChange(this)"
+                                   onmousedown="event.stopPropagation()"
+                                   style="width: 100%; padding: 4px; background: #0f172a; border: 1px solid #334155; border-radius: 4px; color: #f8fafc; font-size: 0.8em; box-sizing: border-box; outline: none;">
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+        `;
+    }
+
     return `
-        <div class="card-header canvas-node-header">
+        <div class="card-header canvas-node-header" style="padding-bottom: 2px;">
             <strong>${service.service_name}</strong>
             <div class="node-actions">
                 <button class="connect-btn" title="Connect Relationship">🔗</button>
                 <button class="delete-btn" title="Remove from canvas">×</button>
             </div>
         </div>
-        <div class="card-body">
-            <small>ID: ${service.thing_id || service.id || 'N/A'}</small>
+        <div class="card-body" style="padding-top: 2px;">
+            <small style="color: #64748b; display: block; margin-bottom: 2px;">ID: ${service.thing_id || service.id || 'N/A'}</small>
+            ${inputsFormHTML}
         </div>
     `;
 }
