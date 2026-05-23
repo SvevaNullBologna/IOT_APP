@@ -108,36 +108,54 @@ RELATIONSHIP RENDERING
 ===================================================== */
 
 function getRelationshipCard(rel) {
-    const isCondition = rel.condition !== null;
+    const isCondition = rel.condition && rel.condition.trim() !== "" && rel.condition.toUpperCase() !== "NULL";
+    
+    // 1. Dynamic color schemes based on the operational relationship logic
+    const badgeBg = isCondition ? 'rgba(249, 115, 22, 0.15)' : 'rgba(59, 130, 246, 0.15)';
+    const badgeColor = isCondition ? '#fb923c' : '#60a5fa';
+    const leftBorderColor = isCondition ? '#ea580c' : '#2563eb';
 
     return `
-        <div class="iot-card rel-card">
-            <div class="card-header">
-                <span class="rel-type-tag">
-                    ${rel.type.toUpperCase()}
+        <div class="iot-card rel-card" 
+             style="background: #1e293b; border: 1px solid #334155; border-left: 4px solid ${leftBorderColor}; border-radius: 8px; margin-bottom: 16px; padding: 16px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -1px rgba(0, 0, 0, 0.1); transition: transform 0.2s ease, box-shadow 0.2s ease;">
+            
+            <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid rgba(51, 65, 85, 0.5);">
+                <span class="rel-type-tag" style="background: ${badgeBg}; color: ${badgeColor}; padding: 3px 8px; border-radius: 4px; font-size: 0.725em; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">
+                    ${isCondition ? 'Condition Based' : 'Order Based'}
                 </span>
-
+                <span style="color: #64748b; font-size: 0.75em; font-family: monospace;">ID: ${rel.type.toLowerCase()}_chain</span>
             </div>
 
-            <div class="card-body">
-                <div class="rel-flow">
-                    <strong>${rel.nameA}</strong>
-                    <span class="flow-arrow">→</span>
-                    <strong>${rel.nameB}</strong>
+            <div class="card-body" style="display: flex; flex-direction: column; gap: 12px;">
+                
+                <div class="rel-flow" style="display: flex; align-items: center; justify-content: space-between; background: #0f172a; padding: 10px 14px; border-radius: 6px; border: 1px solid rgba(51, 65, 85, 0.3);">
+                    <div style="display: flex; flex-direction: column; gap: 2px;">
+                        <span style="font-size: 0.7em; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">Source Node</span>
+                        <strong style="color: #f8fafc; font-size: 0.95em; font-weight: 600;">${rel.nameA}</strong>
+                    </div>
+                    
+                    <div class="flow-arrow" style="color: ${badgeColor}; font-size: 1.35em; font-weight: bold; animation: pulse 2s infinite; padding: 0 8px;">
+                        →
+                    </div>
+                    
+                    <div style="display: flex; flex-direction: column; gap: 2px; text-align: right;">
+                        <span style="font-size: 0.7em; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">Target Outcome</span>
+                        <strong style="color: #f8fafc; font-size: 0.95em; font-weight: 600;">${rel.nameB}</strong>
+                    </div>
                 </div>
 
-                <p class="rel-logic">
+                <div class="rel-logic" style="margin: 0; padding: 4px 2px; display: flex; align-items: center; gap: 6px;">
                     ${
                         isCondition
-                            ? `IF <code>${rel.condition}</code>`
-                            : 'THEN RUN'
+                            ? `<span style="color: #fb923c; font-weight: bold; font-size: 0.85em; font-family: monospace;">IF</span> 
+                               <code style="background: #0f172a; color: #f43f5e; padding: 3px 8px; border-radius: 4px; font-size: 0.85em; border: 1px solid rgba(244, 63, 94, 0.2); font-family: monospace; font-weight: 500;">${rel.condition}</code>`
+                            : `<span style="color: #60a5fa; font-weight: bold; font-size: 0.85em; letter-spacing: 0.05em; font-family: monospace;">⚙ THEN RUN</span>`
                     }
-                </p>
+                </div>
             </div>
         </div>
     `;
 }
-
 function sortRelationships(relationshipDataArray) {
     const sorter = (a, b) => a.nameA.localeCompare(b.nameA);
 

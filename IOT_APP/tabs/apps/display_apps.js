@@ -18,26 +18,41 @@ SHOW APP & DYNAMIC CARD RENDERING
 function getAppCard(app) {
     const appPayload = btoa(encodeURIComponent(JSON.stringify(app)));
 
-    // 1. Read real-time execution states cleanly from the engine map APIs
-    const isRunning = typeof window.isAppRunning === 'function' && window.isAppRunning(app.name);
-    const isPaused = typeof window.isAppPaused === 'function' && window.isAppPaused(app.name);
+    // 1. Read real-time engine execution and termination states
+    const status = typeof window.getAppStatus === 'function' ? window.getAppStatus(app.name) : "Idle";
 
-    // 2. Compute dynamic CSS design treatments based on runtime status
-    let statusClass = "saved-app-card";
+    const isRunning = (status === "Running");
+    const isPaused = (status === "Paused");
+
+    // 2. Compute visual styling based on the exact outcome
+    let statusClass = `saved-app-card status-${status.toLowerCase()}`;
     let borderStyle = "";
     let badgeHTML = "";
 
-    if (isRunning) {
-        statusClass += " active-running";
-        borderStyle = "border-left: 4px solid #10b981; background: #1e293b;"; // Emerald Green Accent
-        badgeHTML = `<span style="background: rgba(16, 185, 129, 0.15); color: #34d399; padding: 2px 6px; border-radius: 4px; font-size: 0.75em; font-weight: bold; text-transform: uppercase;">Running</span>`;
-    } else if (isPaused) {
-        statusClass += " active-paused";
-        borderStyle = "border-left: 4px solid #f59e0b; background: #1e293b;"; // Amber Accent
-        badgeHTML = `<span style="background: rgba(245, 158, 11, 0.15); color: #fbbf24; padding: 2px 6px; border-radius: 4px; font-size: 0.75em; font-weight: bold; text-transform: uppercase;">Paused</span>`;
-    } else {
-        borderStyle = "border-left: 4px solid #475569;"; // Slate Grey Accent (Idle)
-        badgeHTML = `<span style="background: rgba(100, 116, 139, 0.15); color: #94a3b8; padding: 2px 6px; border-radius: 4px; font-size: 0.75em; font-weight: bold; text-transform: uppercase;">Idle</span>`;
+    switch (status) {
+        case "Running":
+            borderStyle = "border-left: 4px solid #10b981; background: #1e293b;"; // Emerald Green Accent
+            badgeHTML = `<span style="background: rgba(16, 185, 129, 0.15); color: #34d399; padding: 2px 6px; border-radius: 4px; font-size: 0.75em; font-weight: bold; text-transform: uppercase;">Running</span>`;
+            break;
+        case "Paused":
+            borderStyle = "border-left: 4px solid #f59e0b; background: #1e293b;"; // Amber Accent
+            badgeHTML = `<span style="background: rgba(245, 158, 11, 0.15); color: #fbbf24; padding: 2px 6px; border-radius: 4px; font-size: 0.75em; font-weight: bold; text-transform: uppercase;">Paused</span>`;
+            break;
+        case "Success":
+            borderStyle = "border-left: 4px solid #3b82f6; background: #0f172a;"; // Blue Accent
+            badgeHTML = `<span style="background: rgba(59, 130, 246, 0.2); color: #60a5fa; padding: 2px 6px; border-radius: 4px; font-size: 0.75em; font-weight: bold; text-transform: uppercase;">✔ Finished</span>`;
+            break;
+        case "ConditionFailed":
+            borderStyle = "border-left: 4px solid #f97316; background: #0f172a;"; // Orange Accent (Warning/Stop)
+            badgeHTML = `<span style="background: rgba(249, 115, 22, 0.2); color: #fb923c; padding: 2px 6px; border-radius: 4px; font-size: 0.75em; font-weight: bold; text-transform: uppercase;">⚠ Blocked</span>`;
+            break;
+        case "Error":
+            borderStyle = "border-left: 4px solid #ef4444; background: #1e1b4b;"; // Intense Dark Red/Indigo Tint
+            badgeHTML = `<span style="background: rgba(239, 68, 68, 0.2); color: #f87171; padding: 2px 6px; border-radius: 4px; font-size: 0.75em; font-weight: bold; text-transform: uppercase;">✖ Failed</span>`;
+            break;
+        default:
+            borderStyle = "border-left: 4px solid #475569; background: #0f172a;"; // Slate Grey Accent (Idle)
+            badgeHTML = `<span style="background: rgba(100, 116, 139, 0.15); color: #94a3b8; padding: 2px 6px; border-radius: 4px; font-size: 0.75em; font-weight: bold; text-transform: uppercase;">Idle</span>`;
     }
 
     return `

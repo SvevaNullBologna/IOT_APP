@@ -74,7 +74,7 @@ export class AtlasBridge {//it wraps the socket
 
         let language = window.thing_languages.find(t => t.thingId === thingId);
         if(!language){
-            return;
+            return false;
         }
 
         const payload = {

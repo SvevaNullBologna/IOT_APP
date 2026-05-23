@@ -262,16 +262,42 @@ window.handle_run_service = function(buttonElement, encodedPayload) {
         console.log(`[Inline Runner] Emitting: Thing: ${thingId} | Service: ${serviceName} | Args: ${formattedInputString}`);
 
         if (window.atlas && typeof window.atlas.callService === 'function') {
-            window.atlas.callService(thingId, serviceName, values);
+            // Execute service invocation call sequence step
+            let sent_call = window.atlas.callService(thingId, serviceName, values);
             
-            // Trigger the small localized text confirmation banner toast layout
             const toast = card.querySelector('.card-status-toast');
+            
             if (toast) {
+                if (sent_call !== false) {
+                    // 🟢 CASE 1: SUCCESSFUL DISPATCH
+                    toast.innerText = "Fired! \u25B6";
+                    toast.style.background = "#10b981"; // Emerald Green Accent
+                    toast.style.color = "#ffffff";
+                    
+                    // Temporary card flash effect
+                    card.style.borderColor = "#10b981";
+                    card.style.boxShadow = "0 0 12px rgba(16, 185, 129, 0.25)";
+                } else {
+                    // 🔴 CASE 2: THING IS OFFLINE / DISPATCH FAILURE
+                    toast.innerText = "Offline \u2716";
+                    toast.style.background = "#ef4444"; // Intense Red Warning Accent
+                    toast.style.color = "#ffffff";
+                    
+                    // Temporary card border error flash
+                    card.style.borderColor = "#ef4444";
+                    card.style.boxShadow = "0 0 12px rgba(239, 68, 68, 0.25)";
+                }
+
+                // Smooth CSS pop-in animation sequence execution
                 toast.style.opacity = '1';
                 toast.style.transform = 'translateY(0)';
+                
+                // Clear state animation resets back to platform template norms
                 setTimeout(() => {
                     toast.style.opacity = '0';
                     toast.style.transform = 'translateY(-5px)';
+                    card.style.borderColor = "#334155";
+                    card.style.boxShadow = "none";
                 }, 1500);
             }
         } else {

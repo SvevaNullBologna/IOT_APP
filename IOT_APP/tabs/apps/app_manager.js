@@ -5,21 +5,18 @@ STATE & CONFIGURATION MANAGEMENT
 */
 const app_folder = "saved_apps";
 
-/*
-const new_app = {
-        name: app_name,
-        relationships: generatedRelationships,
-        services: Array.from(uniqueServicesMap.values())
-    };
-
-    relationship : 
-*/
-
-const runningApps = new Map(); // Stores: appName -> { app, current_node}
-const pausedApps = new Map();  // Stores: appName -> { app, current_node}
+const runningApps = new Map();     // Stores: appName -> { app, current_node}
+const pausedApps = new Map();      // Stores: appName -> { app, current_node}
+const terminatedStatuses = new Map(); // New! Stores: appName -> "Success" | "Error" | "ConditionFailed"
 
 window.runningApps = runningApps;
 window.pausedApps = pausedApps;
+window.getAppStatus = function(appName) {
+    if (runningApps.has(appName)) return "Running";
+    if (pausedApps.has(appName)) return "Paused";
+    return terminatedStatuses.get(appName) || "Idle";
+};
+
 
 /*
 ===========================================
@@ -75,8 +72,7 @@ function restart_app(appName){
     }
 }
 
-function terminate_app(appName) {
-
+function terminate_app(appName, statusReason = "Idle") {
     if (window.atlas && typeof window.atlas.deleteWaitingApp === 'function') {
         window.atlas.deleteWaitingApp(appName);
     }
@@ -84,8 +80,13 @@ function terminate_app(appName) {
     runningApps.delete(appName);
     pausedApps.delete(appName); 
 
+    if (statusReason !== "Idle") {
+        terminatedStatuses.set(appName, statusReason);
+    } else {
+        terminatedStatuses.delete(appName); // Manual clear
+    }
 
-    console.log(`[Engine] Application terminated: ${appName}`);
+    console.log(`[Engine] Application terminated (${statusReason}): ${appName}`);
     if (typeof renderAppsList === 'function') {
         renderAppsList();
     }
@@ -114,37 +115,37 @@ DYNAMIC PIPELINE EXECUTION CODE
 */
 
 function readAppCallReply(thingId, serviceName, appName, result, status){
-    const runningApp = runningApps.get(appName);
-    if(!runningApp) return;
+    const runtime = runningApps.get(appName);
+    if(!runtime) return;
 
     if(status !== "Successful"){
         console.error(`[Engine] Hardware error execution response for ${appName} on service: ${serviceName}`);
-        terminate_app(appName);
+        terminate_app(appName, "Error"); // 🚨 Terminated with Error
         return;
     }
 
-    const relationship = runningApp.app.relationships.find(rel => rel.nameA === runningApp.currentNode);
+    const relationship = runtime.app.relationships.find(rel => rel.nameA === runtime.currentNode);
 
     // If there's no outgoing relationship, the pipeline successfully finished!
     if (!relationship) {
         console.log(`[Engine] Application ${appName} reached the final node and completed successfully.`);
-        terminate_app(appName);
+        terminate_app(appName, "Success"); // 🚨 Completed Successfully
         return;
     }
 
     // Evaluate condition rules over the hardware result
     if (!evaluate_condition(relationship.condition, result)) {
         console.log(`[Engine] The condition (${relationship.condition}) wasn't met for ${appName} on value: ${result}. Stopping pipeline.`);
-        terminate_app(appName);
+        terminate_app(appName, "ConditionFailed"); // 🚨 Stopped by Warning / Condition break
         return;
     }
 
-    // Move state forward: Update current node to Node B and fire it up!
-    console.log(`[Engine] Condition passed! Advancing ${appName} from ${runningApp.currentNode} → ${relationship.nameB}`);
-    runningApp.currentNode = relationship.nameB;
+    // Move state forward
+    const nextNode = relationship.nameB || relationship.nodeB;
+    console.log(`[Engine] Condition passed! Advancing ${appName} from ${runtime.currentNode} → ${nextNode}`);
+    runtime.currentNode = nextNode;
     
-    execute_service(runningApp);
-
+    execute_service(runtime);
 }
 
 function execute_service(runtime) {
@@ -202,45 +203,31 @@ function evaluate_condition(condition, result) {
 /**
  * Handles stepping cleanly through the application workflow array loop
  */
-
 function run_app(appName) {
     if (isAppRunning(appName)) return;
+    
+    // Clear out any old exit statuses as soon as an app runs again
+    terminatedStatuses.delete(appName);
 
     let runtime;
-
-    // If it was paused, retrieve its current running context state
     if (isAppPaused(appName)) {
         runtime = pausedApps.get(appName);
         pausedApps.delete(appName);
     } else {
-        // Starting totally fresh from the beginning
         const apps = get_saved_apps();
         const app = apps.find(a => a.name === appName);
         if (!app || !app.relationships || app.relationships.length === 0) {
             console.error(`[Engine] Cannot run app: Payload structure invalid or empty.`);
             return;
         }
-
-        // Base Game Rule: Start at the nodeA of the first sequence relationship entry
         const firstNode = app.relationships[0].nameA || app.relationships[0].nodeA;
-
-        runtime = { 
-            app, 
-            currentNode: firstNode
-        };
+        runtime = { app, currentNode: firstNode };
     }
     
     runningApps.set(appName, runtime);
-    console.log(`[Engine Execution] Active workflow loop sequence fired up for: ${appName}. Starting node state: ${runtime.currentNode}`);
-
-    if (typeof renderAppsList === 'function') {
-        renderAppsList();
-    }
-
-    // FIRE! Kickstart the execution engine
+    if (typeof renderAppsList === 'function') { renderAppsList(); }
     execute_service(runtime);
 }
-
 /*
 ===========================================
 SAVE TRANSACTION METHOD & VALIDATION
