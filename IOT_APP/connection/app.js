@@ -126,7 +126,7 @@ function read_atlas_tweet(tweet) {
 
         if(!thingId || !service_name || !service_status || !result) return;
 
-        atlas.receivedAnswer(thingId, service_name, result, status);
+        atlas.receivedAnswer(thingId, service_name, result, service_status);
     }
 }
 
