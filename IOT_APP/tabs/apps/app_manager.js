@@ -6,13 +6,10 @@ STATE & CONFIGURATION MANAGEMENT
 const app_folder = "saved_apps";
 
 // FIXED: Changed from new Set() to new Map() so .has(), .set(), and .delete() work correctly
-const runningApps = new Map();
-const waitingOutputs = new Set();
-const pausedApps = new Set();
-
+const runningApps = new Map(); //we add the currRelationship
+const pausedApps = new Map(); //we add the currRelationship
 
 window.runningApps = runningApps;
-window.waitingOutputs = waitingOutputs;
 window.pausedApps = pausedApps;
 
 /*
@@ -33,10 +30,31 @@ function isAppRunning(appName) {
     return runningApps.has(appName);
 }
 
-function pause_app(appName) {
-    if (runningApps.has(appName)) {
+function isAppPaused(appName){
+    return pausedApps.has(appName);
+}
+
+function pause_app(appName) { //what about results incoming? We erase them all and then send them back up again?
+    if (isAppRunning(appName)) {
+        const curr_rel = runningApps.get(appName).curr_rel;
         runningApps.delete(appName);
-        pausedApps.add(appName);
+        atlas.deleteWaitingApp(appName);
+        pausedApps.add(appName, curr_rel); //add current relationship
+
+        console.log(`[Engine] Application paused: ${appName}`);
+    }
+    if (typeof renderAppsList === 'function') {
+        renderAppsList();
+    }
+}
+
+function restart_app(appName){
+    if(isAppPaused(appName)){
+        const curr_rel = pausedApps.get(appName).curr_rel;
+        pausedApps.delete(appName);
+        runningApps.add(appName, curr_rel);
+
+        //run_app(appName, curr_rel);
 
         console.log(`[Engine] Application paused: ${appName}`);
     }
@@ -47,19 +65,17 @@ function pause_app(appName) {
 
 function terminate_app(appName) {
     runningApps.delete(appName);
-    pausedApps.delete(appName);
+    pausedApps.delete(appName); //we do not add the curr relationship
 
-    for(const entry of waitingOutputs){
-        if(entry.appName === appName){
-            waitingOutputs.delete(entry);
-        }
-    }
+    atlas.deleteWaitingApp(appName);
 
     console.log(`[Engine] Application terminated: ${appName}`);
     if (typeof renderAppsList === 'function') {
         renderAppsList();
     }
 }
+
+
 
 function toggle_app_state(appName, shouldRun) {
     if (shouldRun) {
@@ -107,6 +123,10 @@ function delete_app(appName) {
 DYNAMIC PIPELINE EXECUTION CODE
 ======================================
 */
+
+function readAppCallReply(thingId, serviceName, appName, result, status){
+    console.log("readAppCallReply");
+}
 
 /**
  * Executes a service using the event-driven async pattern setup in readServiceCallReply

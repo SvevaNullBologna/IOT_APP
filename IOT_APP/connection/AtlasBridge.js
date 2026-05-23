@@ -7,6 +7,9 @@ export class AtlasBridge {//it wraps the socket
         this.handlers = new Set(); //callback list, so we don't get duplicates
         this.statusHandlers = new Set();
         this.connected = false; //connection state
+        this.serviceWaiting = [];
+        this.appWaiting = [];
+
 
         this.socket.on('connect', () => { //when the WebSocket connects
             this.connected = true;
@@ -55,10 +58,18 @@ export class AtlasBridge {//it wraps the socket
         return this.connected;
     }
 
-    callService(thingId, serviceName, serviceInputs = []){ 
+    
+    callService(thingId, serviceName, serviceInputs = [],  appName=null){ 
         if(!this.connected){
             console.error('[AtlasBridge] Cannot call service: Disconnected.');
             return false;
+        }
+
+        if(appName){
+            this.appWaiting.push({appName, serviceName, thingId});
+        }
+        else{
+            this.serviceWaiting.push({serviceName , thingId});
         }
 
         let language = window.thing_languages.find(t => t.thingId === thingId);
@@ -77,5 +88,53 @@ export class AtlasBridge {//it wraps the socket
         console.log(`[AtlasBridge] Emitting service call:`, payload);
 
         return true;
+    }
+
+    receivedAnswer(thingId, serviceName, result, status) {
+        // 1. Try to find a match in the service queue first
+        const service_index = this.serviceWaiting.findIndex(
+            service => service.serviceName === serviceName && service.thingId === thingId
+        );   
+            
+        if (service_index === -1) { //check if there is an app waiting since there is no service
+            console.log("No waiting UI service found, checking app queue...");
+            
+            // 2. Since it's not a UI service, look inside the app queue instead
+            const app_index = this.appWaiting.findIndex(
+                app => app.serviceName === serviceName && app.thingId === thingId
+            );
+            
+            if (app_index === -1) { //no app waiting too
+                console.warn("No waiting target (Service or App) matches this answer.");
+                return;
+            }
+            
+            // Extract the app item and remove it from the array
+            const [waiting_app] = this.appWaiting.splice(app_index, 1);
+            
+            // Forward to the app layer handler using the stored appName
+            if (typeof window.readAppCallReply === 'function') {
+                window.readAppCallReply(thingId, serviceName, waiting_app.appName, result, status);
+            } else {
+                console.warn("Funzione readAppCallReply non ancora caricata.");
+            }
+
+            return; 
+        }
+        
+        // 3. If we found a UI service match, process it here
+        const [waiting_service] = this.serviceWaiting.splice(service_index, 1);
+
+        if (typeof window.readServiceCallReply === 'function') {
+            window.readServiceCallReply(thingId, serviceName, result, status);
+        } else {
+            console.warn("Funzione readServiceCallReply non ancora caricata.");
+        }
+    }
+
+    deleteWaitingApp(appName) {
+        // Keeps everything that DOES NOT match the appName, deleting the target app entirely
+        this.appWaiting = this.appWaiting.filter(app => app.appName !== appName);
+        console.log(`[AtlasBridge] Cleared all pending entries for app: ${appName}`);
     }
 }

@@ -282,47 +282,18 @@ window.handle_run_service = function(buttonElement, encodedPayload) {
     }
 };
 
-function readServiceCallReply(tweet){
-    const thingId = tweet["Thing ID"]
-    const service_name = tweet["Service Name"]
-    const service_status = tweet["Status"]
-    const result = tweet["Service Result"]
-
-    if(!thingId || !service_name || !service_status || !result) return;
-
-    console.log("ReadServiceCallReply called");
-    
-    let service = services.find(service => service.thing_id === thingId && service.service_name === service_name );
-
-    if(!service){
-        console.warn("Service not found for reply:", thingId, service_name);
-    }
-    
+function readServiceCallReply(thingId, serviceName, result, status){ 
+     let service = services.find(s => s.thing_id == thingId && s.service_name === serviceName);
+     if(!service){
+        console.warn(`[Services] Received reply for untracked service: ${serviceName} on Thing: ${thingId}`);
+        return;
+     }
     service.last_result = result; 
-    service.last_status = service_status === "Successful";
+    service.last_status = status === "Successful";
 
     console.log("last_result", service.last_result);
     console.log("last_status", service.last_status);
     showServicesLists();
-
-    /*
-   const trackingKey =`${thingId}:${service_name}`;
-
-    for (const [appName, runtime] of runningApps.entries()) {
-        if (runtime.waitingResolvers && runtime.waitingResolvers.has(trackingKey)) {
-            console.log(`[Engine] Matching service reply routed to application: ${appName}`);
-            
-            // Extract the pending promise handler
-            const resolver = runtime.waitingResolvers.get(trackingKey);
-            runtime.waitingResolvers.delete(trackingKey); // Clear out slot immediately
-
-            // Deliver the outcome payload directly into the awaiting execution pipeline step
-            resolver({
-                status: service_status,
-                result: result
-            });
-        }
-    }*/
 }
 
 /* DISPLAY ON TAB */
@@ -368,3 +339,6 @@ function initServicesTab() {
 function cleanupServicesTab() {
     console.log("Services cleaned up");
 }
+
+
+window.readServiceCallReply = readServiceCallReply;

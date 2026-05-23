@@ -9,6 +9,9 @@ let unsubscribeStatus = null;
 
 window.thing_languages = [];
 
+window.serviceWaiting = [];
+window.appWaiting = [];
+
 /**
  * Avvia l'ascolto dei tweet dal bridge
  */
@@ -116,11 +119,14 @@ function read_atlas_tweet(tweet) {
         }
     }
     else if(type === "Service call reply"){
-        if (typeof window.readServiceCallReply === 'function') {
-            window.readServiceCallReply(tweet);
-        } else {
-            console.warn("Funzione readServiceCallReply non ancora caricata.");
-        }
+        const thingId = tweet["Thing ID"]
+        const service_name = tweet["Service Name"]
+        const service_status = tweet["Status"]
+        const result = tweet["Service Result"]
+
+        if(!thingId || !service_name || !service_status || !result) return;
+
+        atlas.receivedAnswer(thingId, service_name, result, status);
     }
 }
 
