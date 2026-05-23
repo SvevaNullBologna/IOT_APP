@@ -18,39 +18,67 @@ SHOW APP & DYNAMIC CARD RENDERING
 function getAppCard(app) {
     const appPayload = btoa(encodeURIComponent(JSON.stringify(app)));
 
-    // 1. Read the real-time execution state directly from the engine map
+    // 1. Read real-time execution states cleanly from the engine map APIs
     const isRunning = typeof window.isAppRunning === 'function' && window.isAppRunning(app.name);
+    const isPaused = typeof window.isAppPaused === 'function' && window.isAppPaused(app.name);
 
-    // 2. Safely add a style hook or class if the application loop is processing
-    const statusClass = isRunning ? "saved-app-card active-running" : "saved-app-card";
+    // 2. Compute dynamic CSS design treatments based on runtime status
+    let statusClass = "saved-app-card";
+    let borderStyle = "";
+    let badgeHTML = "";
+
+    if (isRunning) {
+        statusClass += " active-running";
+        borderStyle = "border-left: 4px solid #10b981; background: #1e293b;"; // Emerald Green Accent
+        badgeHTML = `<span style="background: rgba(16, 185, 129, 0.15); color: #34d399; padding: 2px 6px; border-radius: 4px; font-size: 0.75em; font-weight: bold; text-transform: uppercase;">Running</span>`;
+    } else if (isPaused) {
+        statusClass += " active-paused";
+        borderStyle = "border-left: 4px solid #f59e0b; background: #1e293b;"; // Amber Accent
+        badgeHTML = `<span style="background: rgba(245, 158, 11, 0.15); color: #fbbf24; padding: 2px 6px; border-radius: 4px; font-size: 0.75em; font-weight: bold; text-transform: uppercase;">Paused</span>`;
+    } else {
+        borderStyle = "border-left: 4px solid #475569;"; // Slate Grey Accent (Idle)
+        badgeHTML = `<span style="background: rgba(100, 116, 139, 0.15); color: #94a3b8; padding: 2px 6px; border-radius: 4px; font-size: 0.75em; font-weight: bold; text-transform: uppercase;">Idle</span>`;
+    }
 
     return `
         <div class="iot-card thing-variant ${statusClass}"
             ondblclick="window.handleAppDoubleClick('${appPayload}', event)"
-            style="cursor: pointer; user-select: none; ${isRunning ? 'border-left: 4px solid #2ecc71;' : ''}"
+            style="cursor: pointer; user-select: none; margin-bottom: 12px; border-radius: 8px; border: 1px solid #334155; ${borderStyle}"
             title="Double click to open in drop zone">
-            <div class="card-header">
-                <h4 class="thing-title device-name">${app.name}</h4>
+            
+            <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 12px 6px 12px;">
+                <h4 class="thing-title device-name" style="margin: 0; color: #f8fafc; font-size: 1em; font-weight: 600;">${app.name}</h4>
+                ${badgeHTML}
             </div>
-            <div class="card-body card-actions-wrapper">
+
+            <div class="card-body card-actions-wrapper" style="padding: 6px 12px 12px 12px; display: flex; gap: 8px; align-items: center;">
+                
                 <button class="run_app_button icon-btn" 
-                        title="runs selected app" 
-                        style="opacity: ${isRunning ? '0.3' : '1'}; cursor: ${isRunning ? 'not-allowed' : 'pointer'};"
-                        onclick="if(!${isRunning}) { window.toggle_app_state('${app.name}', true); }" ${isRunning ? 'disabled' : ''}>
-                    <i class="icon-play"></i>
+                        title="${isPaused ? 'Resume selected app' : 'Run selected app'}" 
+                        style="opacity: ${isRunning ? '0.3' : '1'}; cursor: ${isRunning ? 'not-allowed' : 'pointer'}; background: #0284c7; color: white; border: none; padding: 6px 10px; border-radius: 4px; font-size: 0.85em;"
+                        onclick="window.toggle_app_state('${app.name}', true)" ${isRunning ? 'disabled' : ''}>
+                    ▶
                 </button>
                 
                 <button class="pause_app_button icon-btn" 
-                        title="pauses selected app" 
-                        style="opacity: ${!isRunning ? '0.3' : '1'}; cursor: ${!isRunning ? 'not-allowed' : 'pointer'};"
-                        onclick="if(${isRunning}) { window.toggle_app_state('${app.name}', false); }" ${!isRunning ? 'disabled' : ''}> 
-                    <i class="icon-pause"></i>
+                        title="Pause selected app" 
+                        style="opacity: ${!isRunning ? '0.3' : '1'}; cursor: ${!isRunning ? 'not-allowed' : 'pointer'}; background: #475569; color: white; border: none; padding: 6px 10px; border-radius: 4px; font-size: 0.85em;"
+                        onclick="window.toggle_app_state('${app.name}', false)" ${!isRunning ? 'disabled' : ''}> 
+                    ⏸
                 </button>
                 
+                <button class="terminate icon-btn" 
+                        title="Stop and reset application state" 
+                        style="opacity: ${(!isRunning && !isPaused) ? '0.3' : '1'}; cursor: ${(!isRunning && !isPaused) ? 'not-allowed' : 'pointer'}; background: #ef4444; color: white; border: none; padding: 6px 10px; border-radius: 4px; font-size: 0.85em;"
+                        onclick="if(typeof window.terminate_app === 'function') { window.terminate_app('${app.name}'); }" ${(!isRunning && !isPaused) ? 'disabled' : ''}> 
+                    ⏹
+                </button>
+
                 <button class="delete_app_button icon-btn" 
-                        title="deletes selected app" 
-                        onclick="window.delete_app('${app.name}')">
-                    <i class="icon-delete"></i>
+                        title="Delete selected app completely" 
+                        style="background: transparent; color: #94a3b8; border: 1px solid #334155; padding: 5px 9px; border-radius: 4px; margin-left: auto; cursor: pointer; font-size: 0.85em;"
+                        onclick="if(typeof window.delete_app === 'function') { window.delete_app('${app.name}'); }">
+                    🗑
                 </button>
             </div>
         </div>
@@ -73,7 +101,7 @@ DOUBLE CLICK INTERACTION ROUTER
 */
 window.handleAppDoubleClick = function(payload, event){
     if(event.target.closest('button') || event.target.closest('svg') || event.target.closest('i')){
-        return; // Prevents loading the app if the user is clicking action buttons
+        return; // Prevents loading the app configuration if user clicks control buttons instead
     } 
 
     try {

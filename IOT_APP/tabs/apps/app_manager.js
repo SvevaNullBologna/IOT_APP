@@ -5,9 +5,8 @@ STATE & CONFIGURATION MANAGEMENT
 */
 const app_folder = "saved_apps";
 
-// FIXED: Changed from new Set() to new Map() so .has(), .set(), and .delete() work correctly
-const runningApps = new Map(); //we add the currRelationship
-const pausedApps = new Map(); //we add the currRelationship
+const runningApps = new Map(); // Stores: appName -> { app, currentStepIndex, waitingResolvers }
+const pausedApps = new Map();  // Stores: appName -> { app, currentStepIndex, waitingResolvers }
 
 window.runningApps = runningApps;
 window.pausedApps = pausedApps;
@@ -21,6 +20,7 @@ function get_saved_apps(){
     const data = localStorage.getItem(app_folder);
     return data ? JSON.parse(data) : [];
 }
+
 /*
 ===========================================
 APPLICATION LIFECYCLE & ENGINE MANAGEMENT
@@ -34,14 +34,26 @@ function isAppPaused(appName){
     return pausedApps.has(appName);
 }
 
-function pause_app(appName) { //what about results incoming? We erase them all and then send them back up again?
+function pause_app(appName) {
     if (isAppRunning(appName)) {
-        const curr_rel = runningApps.get(appName).curr_rel;
-        runningApps.delete(appName);
-        atlas.deleteWaitingApp(appName);
-        pausedApps.add(appName, curr_rel); //add current relationship
+        const runtime = runningApps.get(appName);
+        
+        // 1. Wipe out any pending hardware notices from the bridge
+        if (window.atlas && typeof window.atlas.deleteWaitingApp === 'function') {
+            window.atlas.deleteWaitingApp(appName);
+        }
+        
+        // 2. Reject current open promise contexts so the execution thread safely breaks
+        runtime.waitingResolvers.forEach((rejectFunc) => {
+            rejectFunc(new Error("App Paused"));
+        });
+        runtime.waitingResolvers.clear();
 
-        console.log(`[Engine] Application paused: ${appName}`);
+        // 3. Move the bookmark state to paused tracking map
+        runningApps.delete(appName);
+        pausedApps.set(appName, runtime);
+
+        console.log(`[Engine] Application paused at step index (${runtime.currentStepIndex}): ${appName}`);
     }
     if (typeof renderAppsList === 'function') {
         renderAppsList();
@@ -49,14 +61,16 @@ function pause_app(appName) { //what about results incoming? We erase them all a
 }
 
 function restart_app(appName){
-    if(isAppPaused(appName)){
-        const curr_rel = pausedApps.get(appName).curr_rel;
+    if (isAppPaused(appName)) {
+        const runtime = pausedApps.get(appName);
+        
         pausedApps.delete(appName);
-        runningApps.add(appName, curr_rel);
+        runningApps.set(appName, runtime);
 
-        //run_app(appName, curr_rel);
-
-        console.log(`[Engine] Application paused: ${appName}`);
+        console.log(`[Engine] Resuming application from step index (${runtime.currentStepIndex}): ${appName}`);
+        
+        // Re-ignite continuous runtime loop directly at bookmarked state index
+        run_pipeline_loop(runtime);
     }
     if (typeof renderAppsList === 'function') {
         renderAppsList();
@@ -64,10 +78,17 @@ function restart_app(appName){
 }
 
 function terminate_app(appName) {
+    // Force clean the active loop out of memory execution trees
+    if (runningApps.has(appName)) {
+        runningApps.get(appName).waitingResolvers.forEach(rejectFunc => rejectFunc(new Error("Terminated")));
+    }
+    
     runningApps.delete(appName);
-    pausedApps.delete(appName); //we do not add the curr relationship
+    pausedApps.delete(appName); 
 
-    atlas.deleteWaitingApp(appName);
+    if (window.atlas && typeof window.atlas.deleteWaitingApp === 'function') {
+        window.atlas.deleteWaitingApp(appName);
+    }
 
     console.log(`[Engine] Application terminated: ${appName}`);
     if (typeof renderAppsList === 'function') {
@@ -75,44 +96,26 @@ function terminate_app(appName) {
     }
 }
 
-
-
 function toggle_app_state(appName, shouldRun) {
     if (shouldRun) {
-        if (pausedApps.has(appName)) {
-            pausedApps.delete(appName);
-            // runningApps is now a Map, so we pass the runtime structure or placeholder
-            // For toggle simplicity, run_app handles putting the full runtime object in the map
-            const app = get_saved_apps().find(a => a.name === appName);
-            if(app) {
-                const runtime = { app, running: true, waitingResolvers: new Map() };
-                runningApps.set(appName, runtime);
-                console.log(`[Engine] Resumed application: ${appName}`);
-                if (typeof run_pipeline_loop === 'function') run_pipeline_loop(app);
-            }
+        if (isAppPaused(appName)) {
+            restart_app(appName);
         } else {
             run_app(appName);
         }
     } else {
         pause_app(appName);
     }
-
-    if (typeof renderAppsList === 'function') {
-        renderAppsList();
-    }
 }
 
 function delete_app(appName) {
-    terminate_app(appName);
-
     if (!confirm(`Are you sure you want to completely delete "${appName}"?`)) {
         return;
     }
+    terminate_app(appName);
 
     let saved_apps = get_saved_apps().filter(app => app.name !== appName);
     localStorage.setItem(app_folder, JSON.stringify(saved_apps));
-
-    console.log(`[Engine] Cleared reference storage maps for: ${appName}`);
 
     if (typeof renderAppsList === 'function') {
         renderAppsList();
@@ -125,124 +128,141 @@ DYNAMIC PIPELINE EXECUTION CODE
 */
 
 function readAppCallReply(thingId, serviceName, appName, result, status){
-    console.log("readAppCallReply");
+    const runtime = runningApps.get(appName);
+    if (!runtime) return;
+
+    const trackingKey = `${thingId}:${serviceName}`;
+    const token = runtime.waitingResolvers.get(trackingKey);
+
+    if (token) {
+        runtime.waitingResolvers.delete(trackingKey);
+        token.resolve({ result, success: status === "Successful" });
+    }
 }
 
-/**
- * Executes a service using the event-driven async pattern setup in readServiceCallReply
- */
 async function execute_service(runtime, service) {
     return new Promise((resolve, reject) => {
-        if (!runtime.running) return reject(new Error("App Paused or Terminated"));
+        // Double check against global collections to confirm active state
+        if (!runningApps.has(runtime.app.name)) {
+            return reject(new Error("App Paused or Terminated"));
+        }
 
-        try {
-            // 1. Create a tracking key matching readServiceCallReply pattern
-            const trackingKey = `${service.thing_id}:${service.service_name}`;
-            
-            // 2. Queue up the resolver token into the application runtime context map
-            runtime.waitingResolvers.set(trackingKey, resolve);
+        const trackingKey = `${service.thing_id}:${service.function_name || service.service_name}`;
+        
+        // Save both resolver and rejector callbacks so lifecycle triggers can break the lock
+        runtime.waitingResolvers.set(trackingKey, { resolve, reject });
 
-            // 3. Fire off the actual native hardware command sequence
-            const result = window.atlas.callService(
+        if (window.atlas && typeof window.atlas.callService === 'function') {
+            window.atlas.callService(
                 service.thing_id, 
-                service.service_name, 
-                service.runtime_inputs || []
+                service.function_name || service.service_name, 
+                service.runtime_inputs || [],
+                runtime.app.name
             );
-            
-            // Edge-case: Handle local mocked promises or fast local returns
-            if (result instanceof Promise) {
-                result.then((res) => {
+        } else {
+            // Simulated local testing pipeline fallback trigger execution
+            setTimeout(() => {
+                if (runtime.waitingResolvers.has(trackingKey)) {
                     runtime.waitingResolvers.delete(trackingKey);
-                    resolve(res);
-                }).catch((err) => {
-                    runtime.waitingResolvers.delete(trackingKey);
-                    reject(err);
-                });
-            }
-        } catch (e) {
-            reject(e);
+                    resolve({ result: "25", success: true });
+                }
+            }, 1500);
         }
     });
 }
 
-/**
- * Safely evaluates dynamic string constraints like "value > 10 && value < 50"
- */
 function evaluate_condition(condition, result) {
     if (!condition || condition.trim() === "" || condition.toUpperCase() === "NULL") {
         return true; 
     }
-    
     try {
-        // Prepare scope data environment variables for parsing context execution safely
         let value = isNaN(result) ? result : Number(result);
-
-        // Sanitize out malicious attempts while keeping functional runtime clean
         const safeCondition = condition.replace(/[^a-zA-Z0-9\s><=&|!().+-]/g, '');
-        
-        // Dynamic conditional evaluator function execution execution engine block
         return new Function('value', `return ${safeCondition};`)(value);
     } catch(err) {
-        console.error("[Engine] Condition evaluation parsing structural break syntax flaw:", err);
+        console.error("[Engine] Condition evaluation break syntax flaw:", err);
         return false;
     }
 }
 
 /**
- * Runs the application pipeline structurally looping connections
+ * Handles stepping cleanly through the application workflow array loop
  */
-async function run_app(appName) {
-    if (isAppRunning(appName)) {
-        console.log(`${appName} is already running`);
-        return;
+async function run_pipeline_loop(runtime) {
+    const appName = runtime.app.name;
+
+    // The runtime persists until the execution context is completely dropped out of the running collection map
+    while (runningApps.has(appName)) {
+        try {
+            const relationships = runtime.app.relationships;
+            if (!relationships || relationships.length === 0) break;
+
+            // Loop starting from our current tracked index bookmark configuration layer
+            for (let i = runtime.currentStepIndex; i < relationships.length; i++) {
+                
+                // Break out instantly if the app was paused mid-execution array pass
+                if (!runningApps.has(appName)) break;
+                
+                runtime.currentStepIndex = i; // Save progress bookmark index state 
+                const relationship = relationships[i];
+
+                const sourceService = runtime.app.services.find(s => s.service_name === relationship.nodeA);
+                if (!sourceService) continue;
+
+                console.log(`[Engine] Running Step [${i}] | Service: ${sourceService.service_name}`);
+                const responsePayload = await execute_service(runtime, sourceService);
+
+                if (!responsePayload.success) continue;
+
+                const conditionPassed = evaluate_condition(relationship.condition, responsePayload.result);
+                if (!conditionPassed) continue; 
+
+                const targetService = runtime.app.services.find(s => s.service_name === relationship.nodeB);
+                if (targetService) {
+                    await execute_service(runtime, targetService);
+                }
+            }
+
+            // If the loop finished naturally, reset back to step 0 for next iteration sweep pass
+            if (runningApps.has(appName)) {
+                runtime.currentStepIndex = 0;
+            }
+
+        } catch (error) {
+            // Handle expected execution pauses without spamming console breaks
+            if (error.message === "App Paused") {
+                console.log(`[Engine Loop] Process safely suspended mid-execution sequence step.`);
+                return; 
+            }
+            console.error(`[Engine Core Exception Loop Handlers] Execution failed:`, error);
+        }
+
+        await new Promise(resolve => setTimeout(resolve, 2000));
     }
+}
+
+function run_app(appName) {
+    if (isAppRunning(appName)) return;
 
     const apps = get_saved_apps();
     const app = apps.find(a => a.name === appName);
+    if (!app) return;
 
-    if (!app) {
-        console.error(`[Engine] Application entity definition missing matching target context: ${appName}`);
-        return;
+    // Instantiate context blueprint setting index track parameters cleanly to 0
+    const runtime = { 
+        app, 
+        currentStepIndex: 0, 
+        waitingResolvers: new Map() 
+    };
+    
+    runningApps.set(appName, runtime);
+    console.log(`[Engine Execution] Starting brand new loop context sequence ruleset for: ${appName}`);
+
+    if (typeof renderAppsList === 'function') {
+        renderAppsList();
     }
 
-    const runtime = { app, running: true, waitingResolvers: new Map() };
-    runningApps.set(appName, runtime); // This works perfectly now that runningApps is a Map!
-
-    console.log(`[Engine] Starting processing pipeline chain logic rules for: ${appName}`);
-
-    try {
-        // Iterate sequentially through connections structural workflow rulesets
-        for (const relationship of app.relationships) {
-            if (!runtime.running) break;
-
-            // Find origin node service metadata state parameters configuration data
-            const sourceService = app.services.find(s => s.service_name === relationship.nodeA);
-            if (!sourceService) continue;
-
-            console.log(`[Engine] Processing Node Step: Calling ${sourceService.service_name}...`);
-            
-            // Await hardware response gracefully using your newly generated promise layer
-            const responsePayload = await execute_service(runtime, sourceService);
-
-            // Process rule criteria evaluation
-            const conditionPassed = evaluate_condition(relationship.condition, responsePayload.result);
-            console.log(`[Engine] Rule Matrix Check [${relationship.condition}] against result (${responsePayload.result}) passed:`, conditionPassed);
-
-            if (!conditionPassed) {
-                console.log(`[Engine] Condition failed. Terminating step processing thread down this layout tree branch.`);
-                continue; 
-            }
-
-            // Target Node Resolution Block Execution Step
-            const targetService = app.services.find(s => s.service_name === relationship.nodeB);
-            if (targetService) {
-                console.log(`[Engine] Pipeline connection routing firing linked target operation: ${targetService.service_name}`);
-                await execute_service(runtime, targetService);
-            }
-        }
-    } catch (error) {
-        console.error(`[Engine] Active dynamic execution pipeline encountered runtime exception error loop:`, error);
-    }
+    run_pipeline_loop(runtime);
 }
 
 /*
@@ -256,21 +276,16 @@ function isValidAppName(name) {
 
 function hasValidNodes(nodes) {
     if (nodes.length <= 0) return false;
-
     for (const node of nodes) {
         const payload = node.getAttribute('data-service');
         if (!payload) return false;
-
         try {
             const serviceObj = JSON.parse(decodeURIComponent(atob(payload)));
             if (!serviceObj || !serviceObj.service_name) return false;
-
             if (typeof get_service_input === 'function') {
-                const runtimeInputs = get_service_input(node);
-                if (runtimeInputs === null) return false;
+                if (get_service_input(node) === null) return false;
             }
         } catch (e) {
-            console.error("Invalid node context object processing configuration structural mapping", e);
             return false;
         }
     }
@@ -279,7 +294,6 @@ function hasValidNodes(nodes) {
 
 function hasValidConnections(nodes, connections) {
     if (!connections || connections.length <= 0) return false;
-
     for (const node of nodes) {
         const connected = connections.some(conn => conn.from === node || conn.to === node);
         if (!connected) return false;
@@ -322,14 +336,9 @@ function save_app() {
 
     if (existingIndex !== -1) {
         if (!confirm(`An application named "${app_name}" already exists. Do you want to overwrite it?`)) {
-            console.log(`[Engine] Overwrite cancelled by user.`);
             return;
         }
-        
-        // FIXED: Kept strictly inside the block so it only kills the execution state on a deliberate overwrite action
-        if (typeof terminate_app === 'function') {
-            terminate_app(app_name);
-        }
+        terminate_app(app_name);
     }
 
     const generatedRelationships = [];
@@ -368,10 +377,8 @@ function save_app() {
 
     if (existingIndex !== -1) {
         saved_apps[existingIndex] = new_app;
-        console.log(`[Engine] Application "${app_name}" updated successfully.`);
     } else {
         saved_apps.push(new_app);
-        console.log(`[Engine] Application "${app_name}" saved successfully.`);
     }
 
     localStorage.setItem(app_folder, JSON.stringify(saved_apps));
@@ -389,6 +396,8 @@ GLOBAL EXPORT HANDLERS
 */
 window.get_saved_apps = get_saved_apps;
 window.isAppRunning = isAppRunning;
+window.isAppPaused = isAppPaused;
 window.toggle_app_state = toggle_app_state;
 window.delete_app = delete_app;
 window.save_app = save_app;
+window.readAppCallReply = readAppCallReply;
