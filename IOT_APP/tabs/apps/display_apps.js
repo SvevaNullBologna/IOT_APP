@@ -84,8 +84,8 @@ function getAppCard(app) {
                 
                 <button class="terminate icon-btn" 
                         title="Stop and reset application state" 
-                        style="opacity: ${(!isRunning && !isPaused) ? '0.3' : '1'}; cursor: ${(!isRunning && !isPaused) ? 'not-allowed' : 'pointer'}; background: #ef4444; color: white; border: none; padding: 6px 10px; border-radius: 4px; font-size: 0.85em;"
-                        onclick="if(typeof window.terminate_app === 'function') { window.terminate_app('${app.name}'); }" ${(!isRunning && !isPaused) ? 'disabled' : ''}> 
+                        style="opacity: ${status === 'Idle' ? '0.3' : '1'}; cursor: ${status === 'Idle' ? 'not-allowed' : 'pointer'}; background: #ef4444; color: white; border: none; padding: 6px 10px; border-radius: 4px; font-size: 0.85em;"
+                        onclick="if(typeof window.terminate_app === 'function') { window.terminate_app('${app.name}', 'Idle'); }" ${status === 'Idle' ? 'disabled' : ''}> 
                     ⏹
                 </button>
 

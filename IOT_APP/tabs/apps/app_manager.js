@@ -82,6 +82,10 @@ function terminate_app(appName, statusReason = "Idle") {
 
     if (statusReason !== "Idle") {
         terminatedStatuses.set(appName, statusReason);
+        setTimeout(()=>{
+            terminate_app(appName,"Idle");
+        }, 2000);
+        
     } else {
         terminatedStatuses.delete(appName); // Manual clear
     }
@@ -120,7 +124,7 @@ function readAppCallReply(thingId, serviceName, appName, result, status){
 
     if(status !== "Successful"){
         console.error(`[Engine] Hardware error execution response for ${appName} on service: ${serviceName}`);
-        terminate_app(appName, "Error"); // 🚨 Terminated with Error
+        terminate_app(appName, "Error"); // Terminated with Error
         return;
     }
 
@@ -129,14 +133,14 @@ function readAppCallReply(thingId, serviceName, appName, result, status){
     // If there's no outgoing relationship, the pipeline successfully finished!
     if (!relationship) {
         console.log(`[Engine] Application ${appName} reached the final node and completed successfully.`);
-        terminate_app(appName, "Success"); // 🚨 Completed Successfully
+        terminate_app(appName, "Success"); // Completed Successfully
         return;
     }
 
     // Evaluate condition rules over the hardware result
     if (!evaluate_condition(relationship.condition, result)) {
         console.log(`[Engine] The condition (${relationship.condition}) wasn't met for ${appName} on value: ${result}. Stopping pipeline.`);
-        terminate_app(appName, "ConditionFailed"); // 🚨 Stopped by Warning / Condition break
+        terminate_app(appName, "ConditionFailed"); //  Stopped by Warning / Condition break
         return;
     }
 
@@ -161,7 +165,7 @@ function execute_service(runtime) {
         return;
     }
 
-    // 🛠️ FLATTEN THE INPUT OBJECT INTO AN ARRAY OF STRINGS/VALUES
+    // FLATTEN THE INPUT OBJECT INTO AN ARRAY OF STRINGS/VALUES
     let processedInputs = [];
     if (currentService.runtime_inputs && typeof currentService.runtime_inputs === 'object') {
         // Extract just the raw text values from the key-value map
@@ -171,12 +175,17 @@ function execute_service(runtime) {
     console.log(`[Engine Process] Triggering Service Execution: "${currentService.service_name}" with inputs:`, processedInputs);
 
     if (window.atlas && typeof window.atlas.callService === 'function') {
-        window.atlas.callService(
+        let sent_call = window.atlas.callService(
             currentService.thing_id, 
             currentService.function_name || currentService.service_name, 
             processedInputs, // Send the clean, flat array instead of the raw map object
             appName
         );
+
+        if(sent_call === false){
+            console.warn(`[Engine Failed] Thing ${currentService.thing_id} rejected execution call request.`);
+            terminate_app(appName, "Error");
+        }
     } else {
         // Local simulation fallback
         console.log(`[Engine Mock] Simulating local callback response for: ${currentService.service_name}`);
