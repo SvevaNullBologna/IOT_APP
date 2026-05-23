@@ -283,7 +283,7 @@ window.handle_run_service = function(buttonElement, encodedPayload) {
 };
 
 function readServiceCallReply(thingId, serviceName, result, status){ 
-     let service = services.find(s => s.thing_id == thingId && s.service_name === serviceName);
+     let service = services.find(s => s.thing_id == thingId && (s.service_name === serviceName || s.function_name === serviceName));
      if(!service){
         console.warn(`[Services] Received reply for untracked service: ${serviceName} on Thing: ${thingId}`);
         return;
